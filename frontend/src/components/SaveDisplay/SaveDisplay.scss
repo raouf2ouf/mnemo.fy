@@ -1,0 +1,12 @@
+.save-display {
+  position: relative;
+  .indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--ion-color-danger-shade);
+    position: absolute;
+    top: 6px;
+    right: 15px;
+  }
+}

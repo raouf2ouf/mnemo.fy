@@ -1,0 +1,43 @@
+.task-display {
+  .task-name {
+    display: flex;
+    min-width: 0;
+    text-overflow: ellipsis;
+    color: var(--ion-color-light-shade);
+    margin: 0px 8px;
+    overflow: hidden;
+    white-space: var(--wrap, normal);
+    min-width: 0;
+    font-size: 1rem;
+  }
+  .task-description {
+    margin-left: 8px;
+    font-size: 0.9rem;
+    color: var(--ion-color-medium);
+    &.no-wrap {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+  .infos-line-1 {
+    display: flex;
+    margin-left: 8px;
+  }
+  .infos-line-2 {
+    color: var(--ion-color-medium-shade);
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    & > * {
+      margin-left: 8px;
+    }
+  }
+
+  &.checked {
+    .task-name {
+      color: var(--ion-color-medium-tint);
+      text-decoration: line-through;
+    }
+  }
+}

@@ -1,0 +1,96 @@
+import { memo, useEffect, useState } from "react";
+import "./ProjectsPage.scss";
+import {
+  IonAccordion,
+  IonAccordionGroup,
+  IonCard,
+  IonCardContent,
+  IonContent,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonPage,
+} from "@ionic/react";
+import { addSharp, documentSharp, walletSharp } from "ionicons/icons";
+import { GalaxyDataExport, GalaxyTheme, createNewGalaxy } from "@models/galaxy";
+import EditGalaxyModal from "@modals/EditGalaxy.modal";
+import { useAppSelector } from "@store/store";
+import { selectAllGalaxiesIds } from "@store/galaxies.slice";
+import GalaxyCardDisplay from "@components/GalaxyCardDisplay/GalaxyCardDisplay";
+
+const ProjectsPage: React.FC = () => {
+  const galaxies = useAppSelector(selectAllGalaxiesIds);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalData, setModalData] = useState<GalaxyDataExport | undefined>();
+
+  function createGalaxy() {
+    const galaxy = createNewGalaxy("", "", GalaxyTheme.BTL, false);
+    setModalData(galaxy);
+    setShowModal(true);
+  }
+
+  return (
+    <>
+      <IonPage>
+        <IonContent className="page-content">
+          <div className="page-main-container projects-page">
+            <IonAccordionGroup multiple={true} value={["galaxies", "nfts"]}>
+              <IonAccordion value="galaxies">
+                <IonItem slot="header">
+                  <IonLabel>Projects</IonLabel>
+                </IonItem>
+                <div slot="content">
+                  {galaxies &&
+                    galaxies.map((gId) => (
+                      <GalaxyCardDisplay key={gId} id={gId} />
+                    ))}
+                  <IonCard
+                    type="button"
+                    className="card-button add-galaxy"
+                    onClick={createGalaxy}
+                  >
+                    <IonCardContent>
+                      <IonIcon icon={addSharp} />
+                      <div className="title">Create Galaxy</div>
+                    </IonCardContent>
+                  </IonCard>
+
+                  <IonCard type="button" className="card-button import-galaxy">
+                    <input
+                      type="file"
+                      // (change)="handleImportGalaxy($event)"
+                    />
+                    <IonCardContent>
+                      <IonIcon icon={documentSharp} />
+                      <div className="title">Import Galaxy</div>
+                    </IonCardContent>
+                  </IonCard>
+                </div>
+              </IonAccordion>
+              <IonAccordion value="nfts">
+                <IonItem slot="header">
+                  <IonLabel>NFTs</IonLabel>
+                </IonItem>
+                <div slot="content">
+                  <IonCard type="button" className="card-button connect-wallet">
+                    <IonCardContent>
+                      <IonIcon icon={walletSharp} />
+                      <div className="title">Connect Wallet</div>
+                    </IonCardContent>
+                  </IonCard>
+                </div>
+              </IonAccordion>
+            </IonAccordionGroup>
+          </div>
+        </IonContent>
+      </IonPage>
+      <EditGalaxyModal
+        isOpen={showModal}
+        setIsOpen={setShowModal}
+        data={modalData}
+      />
+    </>
+  );
+};
+
+export default memo(ProjectsPage);

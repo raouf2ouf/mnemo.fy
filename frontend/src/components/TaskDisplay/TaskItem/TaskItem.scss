@@ -1,0 +1,148 @@
+.task-container {
+  --distance: 32px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-bottom-color: rgba(74, 74, 74, 0.3);
+  background-color: var(--background-color-dark);
+  cursor: pointer;
+  &:focus,
+  &:focus-within,
+  &:focus-visible {
+    outline: 0;
+    border-color: var(--ion-color-warning-shade);
+  }
+
+  &.type1 {
+    // system
+    margin-left: calc(var(--distance) + 14px);
+  }
+  &.type2 {
+    // planet
+    margin-left: calc((var(--distance) * 2) + 14px);
+  }
+  &.type3 {
+    // moon
+    margin-left: calc((var(--distance) * 3) + 14px);
+  }
+
+  /* Toggle */
+  .toggle {
+    ion-button {
+      --color: var(--task-color);
+    }
+  }
+  /* Type Text */
+  .type-text {
+    margin-left: 8px;
+    text-transform: uppercase;
+    color: var(--task-color);
+  }
+
+  /* Task Content */
+  .task-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .task-buttons {
+    ion-button {
+      --color: var(--task-color);
+      opacity: 0.8;
+    }
+  }
+}
+.task-menu-popover {
+  ion-item {
+    --color: var(--ion-color-medium-tint);
+    --inner-border-width: 0px;
+    &.delete {
+      --color: var(--ion-color-warning-shade);
+      ion-icon {
+        color: var(--ion-color-warning-shade);
+      }
+    }
+    ion-icon {
+      color: var(--ion-color-medium-tint);
+    }
+  }
+}
+
+.drag-placeholder {
+  height: 50px;
+  position: relative;
+  margin-left: 18px;
+  --line-color: var(--ion-color-danger);
+  --distance: 32px;
+  z-index: 99999;
+  .line {
+    min-height: 25px;
+    border-color: var(--line-color);
+    border-color: var(--line-color);
+    border-bottom: 2px solid var(--line-color);
+    border-left: 2px solid var(--line-color);
+    border-radius: 0px 0px 0px 5px;
+  }
+  .circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--line-color);
+    position: absolute;
+    top: -4px;
+    left: -5px;
+    border: 2px solid var(--background-color-dark);
+  }
+  &.type0 {
+    .circle {
+      background-color: transparent;
+      .inside {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border: 1px dashed var(--line-color);
+        background-color: var(--background-color-dark);
+      }
+    }
+  }
+  &.type1 {
+    // system
+    margin-left: calc((var(--distance) * 1) + 14px);
+  }
+  &.type2 {
+    // planet
+    margin-left: calc((var(--distance) * 2) + 14px);
+    .circle {
+      background-color: var(--line-color);
+      .inside {
+        background-color: var(--line-color);
+        border: 1px solid var(--background-color-dark);
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        position: absolute;
+        top: -3px;
+        right: -2px;
+      }
+    }
+  }
+  &.type3 {
+    // moon
+    margin-left: calc((var(--distance) * 3) + 14px);
+    .circle {
+      background-color: transparent;
+      border-color: transparent;
+      .inside {
+        border-radius: 50%;
+        border: 1px solid var(--background-color-dark);
+        background-color: var(--line-color);
+        width: 8px;
+        height: 8px;
+      }
+    }
+  }
+}

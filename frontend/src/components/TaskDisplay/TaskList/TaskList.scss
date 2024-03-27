@@ -1,0 +1,15 @@
+#add-task {
+  border: 1px solid transparent;
+  background-color: var(--background-color-dark);
+  cursor: pointer;
+  &:focus {
+    border-color: var(--ion-color-warning-shade);
+  }
+  &:focus-within {
+    border-color: var(--ion-color-warning-shade);
+  }
+  &:focus-visible {
+    outline: 0;
+    border-color: var(--ion-color-warning-shade);
+  }
+}

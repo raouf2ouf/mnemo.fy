@@ -1,0 +1,77 @@
+.checkcircle-container {
+  position: relative;
+  cursor: pointer;
+  padding: 8px 4px;
+  &:focus-visible {
+    outline: 0;
+    background: var(--background-color-light);
+  }
+  .checkcircle {
+    display: flex;
+    justify-content: center;
+    border-radius: 50%;
+    padding: 2px;
+    border: 2px solid var(--task-color);
+    width: 26px;
+    height: 26px;
+    .checkmark {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: var(--task-color);
+      ion-icon {
+        width: 10px;
+        color: var(--background-color-dark);
+      }
+    }
+  }
+  .sec,
+  .sys,
+  .pla,
+  .moo {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--background-color-light);
+    background-color: var(--task-color);
+  }
+
+  .sec {
+    background-color: transparent;
+    .inside {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border: 1px dashed var(--task-color);
+      background-color: var(--background-color-light);
+    }
+  }
+  .sys {
+    border-radius: 50%;
+  }
+  .pla {
+    border-radius: 50%;
+    background-color: bar(--background-color-light);
+    .inside {
+      background-color: var(--task-color);
+      border: 1px solid var(--background-color-light);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      position: absolute;
+      top: -3px;
+      right: -2px;
+    }
+  }
+  .moo {
+    border-radius: 50%;
+    width: 8px;
+    height: 8px;
+    bottom: 6px;
+    right: 4px;
+  }
+}

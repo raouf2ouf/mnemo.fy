@@ -1,0 +1,22 @@
+.chip-picker {
+  display: flex;
+  flex-wrap: wrap;
+  .chip {
+    background-color: var(--task-color-shade);
+    color: var(--ion-color-medium-tint);
+    margin: 4px;
+    padding: 2px 10px;
+    display: flex;
+    align-items: center;
+  }
+  ion-input {
+    min-width: 30px;
+    flex: 1;
+    //   --background: var(--task-color-shade);
+    --placeholder-color: var(--ion-color-medium-shade);
+    --color: var(--ion-color-light-shade);
+    --padding-start: 8px;
+    --padding-end: 8px;
+    --highlight-color-focused: var(--task-color);
+  }
+}
