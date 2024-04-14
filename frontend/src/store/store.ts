@@ -5,12 +5,14 @@ import tasksSlice from "./tasks.slice";
 import galaxiesSlice from "./galaxies.slice";
 import backupSlice from "./backup.slice";
 import hexesSlice from "./hexes.slice";
+import territoriesSlice from "./territories.slice";
 
 const rootReducer = combineReducers({
   galaxies: galaxiesSlice,
   tasks: tasksSlice,
   backup: backupSlice,
   hexes: hexesSlice,
+  territories: territoriesSlice,
 });
 
 export const setupStore = (preloadedState?: any) => {

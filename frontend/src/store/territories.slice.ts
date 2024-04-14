@@ -1,78 +1,36 @@
-import { HEX_SIZE, Hex } from "@models/hex";
-import { buildSpaceFlatHexes } from "@models/hex.utils";
-import {
-  createAsyncThunk,
-  createEntityAdapter,
-  createSlice,
-} from "@reduxjs/toolkit";
+import { Territory } from "@models/territory";
+import { createEntityAdapter, createSlice } from "@reduxjs/toolkit";
 
 // API
-export const loadHexes = createAsyncThunk(
-  "hexes/loadHexes",
-  async (): Promise<{
-    hexes: Hex[];
-    starts: number[];
-    nbrRows: number;
-    nbrCols: number;
-  }> => {
-    const nbrRows = 10;
-    const nbrCols = 13;
-    const { hexes, starts } = buildSpaceFlatHexes(HEX_SIZE, nbrRows, nbrCols);
-    return { hexes, starts, nbrRows, nbrCols };
-  }
-);
 
 // Adapter
-const hexesAdapter = createEntityAdapter<Hex>({
-  sortComparer: (a: Hex, b: Hex) => a.id - b.id,
+const territoriesAdapter = createEntityAdapter<Territory>({
+  sortComparer: (a: Territory, b: Territory) => a.id.localeCompare(b.id),
 });
 
 // Selector
-export const { selectAll: selectAllHexes, selectById: selectHexById } =
-  hexesAdapter.getSelectors((state: any) => state.hexes);
+export const {
+  selectAll: selectAllTerritories,
+  selectById: selectTerritoryById,
+} = territoriesAdapter.getSelectors((state: any) => state.territories);
 
-type ExtraState = {
-  starts: number[];
-  nbrRows: number;
-  nbrCols: number;
-};
-
-export const hexesSlice = createSlice({
+export const territoriesSlice = createSlice({
   name: "hexes",
-  initialState: hexesAdapter.getInitialState<ExtraState>({
-    starts: [],
-    nbrRows: 0,
-    nbrCols: 0,
-  }),
+  initialState: territoriesAdapter.getInitialState(),
   reducers: {
-    setHexesData: (
+    updateTerritories: (
       state,
       {
         payload,
       }: {
-        payload: {
-          hexes: Hex[];
-          starts: number[];
-          nbrRows: number;
-          nbrCols: number;
-        };
+        payload: Territory[];
       }
     ) => {
-      state.starts = payload.starts;
-      state.nbrRows = payload.nbrRows;
-      state.nbrCols = payload.nbrCols;
-      hexesAdapter.setAll(state, payload.hexes);
+      territoriesAdapter.setAll(state, payload);
     },
   },
-  extraReducers: (builder) => {
-    builder.addCase(loadHexes.fulfilled, (state, action) => {
-      state.starts = action.payload.starts;
-      state.nbrRows = action.payload.nbrRows;
-      state.nbrCols = action.payload.nbrCols;
-      hexesAdapter.setAll(state, action.payload.hexes);
-    });
-  },
+  extraReducers: (builder) => {},
 });
 
-export const { setHexesData } = hexesSlice.actions;
-export default hexesSlice.reducer;
+export const { updateTerritories } = territoriesSlice.actions;
+export default territoriesSlice.reducer;

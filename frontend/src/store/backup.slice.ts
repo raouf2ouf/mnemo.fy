@@ -5,6 +5,7 @@ import { updateTasks } from "./tasks.slice";
 import { setCurrentGalaxySaveStatus } from "./galaxies.slice";
 import { SaveStatus } from "@models/galaxy";
 import { updateHexes } from "./hexes.slice";
+import { updateTerritories } from "./territories.slice";
 
 const MAX_BKP_LENGTH = 9;
 
@@ -28,6 +29,9 @@ export const rollback = createAsyncThunk(
     thunkAPI.dispatch(setCurrentGalaxySaveStatus(SaveStatus.NEED_TO_SAVE));
     if (step.rollback.hexesChange) {
       thunkAPI.dispatch(updateHexes(step.rollback.hexesChange));
+    }
+    if (step.rollforward.territories) {
+      thunkAPI.dispatch(updateTerritories(step.rollforward.territories));
     }
 
     return { bkps, bkpsForward };
@@ -53,6 +57,9 @@ export const rollforward = createAsyncThunk(
     thunkAPI.dispatch(setCurrentGalaxySaveStatus(SaveStatus.NEED_TO_SAVE));
     if (step.rollforward.hexesChange) {
       thunkAPI.dispatch(updateHexes(step.rollforward.hexesChange));
+    }
+    if (step.rollforward.territories) {
+      thunkAPI.dispatch(updateTerritories(step.rollforward.territories));
     }
 
     return { bkps, bkpsForward };

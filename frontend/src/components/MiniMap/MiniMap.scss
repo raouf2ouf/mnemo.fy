@@ -21,6 +21,12 @@
           fill: var(--color);
         }
       }
+      .territory {
+        polygon {
+          fill: var(--color);
+          stroke: var(--color);
+        }
+      }
     }
   }
 }

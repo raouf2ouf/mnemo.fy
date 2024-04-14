@@ -13,6 +13,9 @@ import { System } from "@models/task/system";
 import { _addToChangeStack } from "./backup.slice.utils";
 import { updateTasks } from "./tasks.slice";
 import { backup } from "./backup.slice";
+import { buildTerritories } from "./territories.slice.utils";
+import { Sector } from "@models/task/sector";
+import { updateTerritories } from "./territories.slice";
 
 // API
 export const loadHexes = createAsyncThunk(
@@ -39,11 +42,13 @@ export const refreshPositions = createAsyncThunk(
     const hexes = Object.values(state.hexes.entities).map((hex) => {
       return { ...hex };
     });
-    const systems = Object.values(state.tasks.entities)
+    const tasks = Object.values(state.tasks.entities);
+    const systems = tasks
       .filter((t) => t.type == TaskType.SYSTEM)
       .map((t) => {
         return { ...t };
       }) as System[];
+    const sectors = tasks.filter((t) => t.type == TaskType.SECTOR) as Sector[];
 
     const bkp: BackupStep = {
       rollback: { tasksChange: [], hexesChange: [] },
@@ -81,7 +86,6 @@ export const refreshPositions = createAsyncThunk(
           nbrRows,
           nbrCols
         );
-        console.log("first system proposed", hexId);
         const hex = hexes[hexId];
         hex.sectorId = system.parent;
         _addToChangeStack(bkp.rollforward.tasksChange!, [
@@ -94,10 +98,22 @@ export const refreshPositions = createAsyncThunk(
       }
     }
 
-    console.log(bkp);
+    const newTerritories = buildTerritories(sectors, hexes, nbrRows, nbrCols);
+    const oldTerritories = Object.values(state.territories.entities).map(
+      (t) => {
+        return { ...t };
+      }
+    );
+
+    console.log("old Territories", oldTerritories);
+    console.log("newTerritories", newTerritories);
+
+    bkp.rollback.territories = oldTerritories;
+    bkp.rollforward.territories = newTerritories;
 
     thunkAPI.dispatch(backup(bkp));
     thunkAPI.dispatch(updateTasks(bkp.rollforward));
+    thunkAPI.dispatch(updateTerritories(bkp.rollforward.territories));
     return bkp.rollforward.hexesChange!;
   }
 );

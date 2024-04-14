@@ -21,8 +21,7 @@ const SystemCell: React.FC<Props> = ({ id }) => {
   return (
     <>
       {system && system.hex !== undefined && hex && (
-        <g className="system" style={{ "--color": system.color + "30" } as any}>
-          <polygon points={pointsToString(hex.corners)} />
+        <g className="system" style={{ "--color": system.color + "A0" } as any}>
           <circle cx={hex.center.x} cy={hex.center.y} r="15" />
         </g>
       )}

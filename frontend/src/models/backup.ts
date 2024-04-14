@@ -12,19 +12,12 @@ export interface HexChange {
   changes: Partial<Hex>;
 }
 
-export interface TerritoryChange {
-  id: number;
-  changes: Partial<Territory>;
-}
-
 export interface BackupAction {
   tasksChange?: TaskChange[];
   tasksDelete?: string[];
   tasksAdd?: Task[];
   hexesChange?: HexChange[];
-  territoriesChange?: TerritoryChange[];
-  territoriesDelete?: string[];
-  territoriesAdd?: Territory[];
+  territories?: Territory[];
 }
 
 export interface BackupStep {

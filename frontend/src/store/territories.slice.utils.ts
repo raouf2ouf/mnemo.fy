@@ -3,11 +3,13 @@ import {
   getAllRingNeighborsRowCol,
   isValidRowCol,
   pointToString,
+  pointsToString,
   rowColToId,
   stringToPoint,
 } from "@models/hex.utils";
 import { Sector } from "@models/task/sector";
-import { Territory, territoryId } from "@models/territory";
+import { Territory, TerritorySection } from "@models/territory";
+import { buildShapes, computeTitlePositionSize } from "@models/territoy.utils";
 
 export function buildPointsMapping(
   hexes: Hex[],
@@ -37,38 +39,40 @@ export function buildPointsMapping(
   return points;
 }
 
-export function buildShapes(pointsMap: Map<string, string>): Point[][] {
-  const shapes: Point[][] = [];
-
-  let startingPt: string | undefined = undefined;
-  let currentPt: string | undefined = undefined;
-  let shape: Point[] = [];
-
-  while (pointsMap.size > 0) {
-    if (!startingPt) {
-      startingPt = pointsMap.keys().next().value;
-      currentPt = startingPt;
-      shape = [stringToPoint(startingPt!)];
-      shapes.push(shape);
-    }
-    const nextPt = pointsMap.get(currentPt!);
-    if (nextPt === undefined || nextPt === startingPt) {
-      // we close the shape
-      pointsMap.delete(currentPt!);
-      startingPt = undefined;
-    } else {
-      pointsMap.delete(currentPt!);
-      shape.push(stringToPoint(nextPt));
-      currentPt = nextPt;
-    }
-  }
-  return shapes;
-}
-
 export function buildTerritory(
+  sectorId: string,
   pointsMap: Map<string, string>,
   userPointsMap: Map<string, string>
-): Territory {}
+): Territory {
+  const shapes = buildShapes(pointsMap);
+  const sections: TerritorySection[] = [];
+  for (const shape of shapes) {
+    const { titlePosition, titleSize } = computeTitlePositionSize(shape);
+    sections.push({
+      points: pointsToString(shape.points),
+      inverse: shape.inverse.map((inv) => pointsToString(inv)),
+      titlePosition,
+      titleSize,
+      userControlled: false,
+    });
+  }
+
+  const userShapes = buildShapes(userPointsMap);
+  for (const shape of userShapes) {
+    sections.push({
+      points: pointsToString(shape.points),
+      inverse: shape.inverse.map((inv) => pointsToString(inv)),
+      titlePosition: { x: 0, y: 0 },
+      titleSize: 0,
+      userControlled: true,
+    });
+  }
+
+  return {
+    id: sectorId,
+    sections,
+  };
+}
 
 export function buildTerritories(
   sectors: Sector[],
@@ -97,7 +101,7 @@ export function buildTerritories(
       nbrCols,
       (hex: Hex) => hex.sectorId == sector.id && hex.userControlled == true
     );
-    territories.push(buildTerritory(points, userPoints));
+    territories.push(buildTerritory(sector.id, points, userPoints));
   }
   return territories;
 }

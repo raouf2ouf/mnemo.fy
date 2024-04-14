@@ -8,6 +8,7 @@ import { IonButton, IonIcon } from "@ionic/react";
 import { refreshSharp } from "ionicons/icons";
 import { useAppDispatch } from "@store/store";
 import { refreshPositions } from "@store/hexes.slice";
+import Territories from "./Territories";
 const MiniMap: React.FC = () => {
   const dispatch = useAppDispatch();
 
@@ -29,6 +30,7 @@ const MiniMap: React.FC = () => {
         >
           <g transform="translate(32.5,0)">
             <Grid />
+            <Territories />
             <Systems />
           </g>
         </svg>
