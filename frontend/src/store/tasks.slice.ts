@@ -2,7 +2,6 @@ import { v4 as uuid } from "uuid";
 import { SectorDataExport } from "@models/task/sector";
 import { Task } from "@models/task/task";
 import {
-  Update,
   createAsyncThunk,
   createEntityAdapter,
   createSelector,
@@ -13,7 +12,6 @@ import {
   getFocusIdDown,
   getFocusIdUp,
   inflateSectorsAndChildren,
-  morph,
   morphTask,
   moveTaskDownHelper,
   moveTaskLeftHelper,
@@ -22,11 +20,15 @@ import {
   propagateChecked,
 } from "./tasks.slice.utils";
 import { RootState } from "./store";
-import { backup, rollback } from "./backup.slice";
-import { BackupAction, BackupStep, Change } from "@models/backup";
+import { backup } from "./backup.slice";
+import { BackupAction, BackupStep, TaskChange } from "@models/backup";
 import { TaskColor, TaskType } from "@models/task/task.enums";
 import { toast } from "react-toastify";
 import { _addToChangeStack } from "./backup.slice.utils";
+import { setHexesData } from "./hexes.slice";
+import { proposeSystemPosition } from "./hexes.slice.utils";
+import { buildSpaceFlatHexes } from "@models/hex.utils";
+import { HEX_SIZE, NBR_COLS, NBR_ROWS } from "@models/hex";
 
 // API
 export const addTask = createAsyncThunk(
@@ -78,29 +80,29 @@ export const deleteTask = createAsyncThunk(
   "tasks/deleteTask",
   async (taskId: string, thunkAPI): Promise<BackupAction> => {
     const bkp: BackupStep = {
-      rollback: { toChange: [], toAdd: [], toDelete: [] },
-      rollforward: { toChange: [], toAdd: [], toDelete: [] },
+      rollback: { tasksChange: [], tasksAdd: [], tasksDelete: [] },
+      rollforward: { tasksChange: [], tasksAdd: [], tasksDelete: [] },
     };
 
     const state = thunkAPI.getState() as RootState;
     const task = state.tasks.entities[taskId]!;
     if (task) {
-      bkp.rollback.toAdd.push(JSON.parse(JSON.stringify(task)));
-      bkp.rollforward.toDelete.push(task.id);
+      bkp.rollback.tasksAdd!.push(JSON.parse(JSON.stringify(task)));
+      bkp.rollforward.tasksDelete!.push(task.id);
       const tasks = Object.values(state.tasks.entities);
       const { children } = getAllChildren(tasks, taskId);
       for (const child of children) {
         const childData = JSON.parse(JSON.stringify(child));
-        bkp.rollback.toAdd.push(childData);
-        bkp.rollforward.toDelete.push(child.id);
+        bkp.rollback.tasksAdd!.push(childData);
+        bkp.rollforward.tasksDelete!.push(child.id);
       }
       const delta = children.length + 1;
       for (let i = task.index + children.length; i < tasks.length; i++) {
         const t = tasks[i];
-        _addToChangeStack(bkp.rollback.toChange, [
+        _addToChangeStack(bkp.rollback.tasksChange!, [
           { id: t.id, changes: { index: t.index } },
         ]);
-        _addToChangeStack(bkp.rollforward.toChange, [
+        _addToChangeStack(bkp.rollforward.tasksChange!, [
           { id: t.id, changes: { index: t.index - delta } },
         ]);
       }
@@ -112,17 +114,41 @@ export const deleteTask = createAsyncThunk(
 
 export const inflateTasks = createAsyncThunk(
   "tasks/inflateTasks",
-  async ({
-    data,
-    galaxyId,
-  }: {
-    data: SectorDataExport[];
-    galaxyId: string;
-  }) => {
+  async (
+    {
+      data,
+      galaxyId,
+    }: {
+      data: SectorDataExport[];
+      galaxyId: string;
+    },
+    thunkAPI
+  ) => {
+    const { hexes, starts } = buildSpaceFlatHexes(HEX_SIZE, NBR_ROWS, NBR_COLS);
     const tasks = inflateSectorsAndChildren(galaxyId, data);
-    tasks.forEach((t, idx) => {
-      t.index = idx;
-    });
+    let idx = 0;
+    for (const task of tasks) {
+      task.index = idx;
+      idx++;
+      if (task.type == TaskType.SYSTEM) {
+        if (task.hex === undefined) {
+          // need hex
+          task.hex = proposeSystemPosition(
+            tasks,
+            task,
+            hexes,
+            starts,
+            NBR_ROWS,
+            NBR_COLS
+          );
+        }
+        const hex = hexes[task.hex];
+        hex.sectorId = task.parent;
+      }
+    }
+    thunkAPI.dispatch(
+      setHexesData({ hexes, starts, nbrRows: NBR_ROWS, nbrCols: NBR_COLS })
+    );
     return tasks;
   }
 );
@@ -132,15 +158,15 @@ export const toggleChecked = createAsyncThunk(
   async (
     { taskId, toggle }: { taskId: string; toggle?: boolean },
     thunkAPI
-  ): Promise<Change[] | undefined> => {
+  ): Promise<TaskChange[] | undefined> => {
     const state = thunkAPI.getState() as RootState;
     const data = propagateChecked(state.tasks.entities, taskId, toggle);
     if (!data) return;
 
     thunkAPI.dispatch(
       backup({
-        rollback: { toChange: data.rollback, toAdd: [], toDelete: [] },
-        rollforward: { toChange: data.rollforward, toAdd: [], toDelete: [] },
+        rollback: { tasksChange: data.rollback },
+        rollforward: { tasksChange: data.rollforward },
       })
     );
 
@@ -163,7 +189,7 @@ export const moveTask = createAsyncThunk(
       newDisplayIdx: number;
     },
     thunkAPI
-  ): Promise<Change[] | undefined> => {
+  ): Promise<TaskChange[] | undefined> => {
     const entities = (thunkAPI.getState() as RootState).tasks.entities;
     const task = entities[taskId];
     if (!task) return;
@@ -182,13 +208,13 @@ export const moveTask = createAsyncThunk(
     } else {
       toast.error("Not a valid move: No possible parent.");
     }
-    return bkpStep?.rollforward.toChange;
+    return bkpStep?.rollforward.tasksChange;
   }
 );
 
 export const moveTaskLeft = createAsyncThunk(
   "tasks/moveTaskLeft",
-  async (taskId: string, thunkAPI): Promise<Change[] | undefined> => {
+  async (taskId: string, thunkAPI): Promise<TaskChange[] | undefined> => {
     const state = thunkAPI.getState() as RootState;
     const task = state.tasks.entities[taskId]!;
     const tasks = Object.values(state.tasks.entities).sort(
@@ -201,7 +227,7 @@ export const moveTaskLeft = createAsyncThunk(
       if (parent && parent.closed) {
         thunkAPI.dispatch(toggleTask({ taskId: parent.id, toggle: false }));
       }
-      return res.bkp.rollforward.toChange;
+      return res.bkp.rollforward.tasksChange;
     } else {
       toast.error("No possible parent when moving this task left");
     }
@@ -210,7 +236,7 @@ export const moveTaskLeft = createAsyncThunk(
 
 export const moveTaskRight = createAsyncThunk(
   "tasks/moveTaskRight",
-  async (taskId: string, thunkAPI): Promise<Change[] | undefined> => {
+  async (taskId: string, thunkAPI): Promise<TaskChange[] | undefined> => {
     const state = thunkAPI.getState() as RootState;
     const task = state.tasks.entities[taskId]!;
     const tasks = Object.values(state.tasks.entities).sort(
@@ -223,7 +249,7 @@ export const moveTaskRight = createAsyncThunk(
       if (parent && parent.closed) {
         thunkAPI.dispatch(toggleTask({ taskId: parent.id, toggle: false }));
       }
-      return res.bkp.rollforward.toChange;
+      return res.bkp.rollforward.tasksChange;
     } else {
       toast.error("No possible parent when moving this task right");
     }
@@ -232,7 +258,7 @@ export const moveTaskRight = createAsyncThunk(
 
 export const moveTaskUp = createAsyncThunk(
   "tasks/moveTaskUp",
-  async (taskId: string, thunkAPI): Promise<Change[] | undefined> => {
+  async (taskId: string, thunkAPI): Promise<TaskChange[] | undefined> => {
     const state = thunkAPI.getState() as RootState;
     const task = state.tasks.entities[taskId]!;
     const tasks = Object.values(state.tasks.entities).sort(
@@ -245,7 +271,7 @@ export const moveTaskUp = createAsyncThunk(
       if (parent && parent.closed) {
         thunkAPI.dispatch(toggleTask({ taskId: parent.id, toggle: false }));
       }
-      return res.bkp.rollforward.toChange;
+      return res.bkp.rollforward.tasksChange;
     } else {
       toast.error("No possible parent when moving this task up");
     }
@@ -254,7 +280,7 @@ export const moveTaskUp = createAsyncThunk(
 
 export const moveTaskDown = createAsyncThunk(
   "tasks/moveTaskDown",
-  async (taskId: string, thunkAPI): Promise<Change[] | undefined> => {
+  async (taskId: string, thunkAPI): Promise<TaskChange[] | undefined> => {
     const state = thunkAPI.getState() as RootState;
     const task = state.tasks.entities[taskId]!;
     const tasks = Object.values(state.tasks.entities).sort(
@@ -267,7 +293,7 @@ export const moveTaskDown = createAsyncThunk(
       if (parent && parent.closed) {
         thunkAPI.dispatch(toggleTask({ taskId: parent.id, toggle: false }));
       }
-      return res.bkp.rollforward.toChange;
+      return res.bkp.rollforward.tasksChange;
     } else {
       toast.error("No possible parent when moving this task down");
     }
@@ -277,29 +303,32 @@ export const moveTaskDown = createAsyncThunk(
 export const updateAndBackupTask = createAsyncThunk(
   "tasks/updateTask",
   async (
-    { rollforward, rollback }: { rollforward: Change; rollback: Change },
+    {
+      rollforward,
+      rollback,
+    }: { rollforward: TaskChange; rollback: TaskChange },
     thunkAPI
   ): Promise<BackupAction> => {
     const bkp: BackupStep = {
-      rollforward: { toChange: [], toAdd: [], toDelete: [] },
-      rollback: { toChange: [], toAdd: [], toDelete: [] },
+      rollforward: { tasksChange: [], tasksAdd: [], tasksDelete: [] },
+      rollback: { tasksChange: [], tasksAdd: [], tasksDelete: [] },
     };
     const state = thunkAPI.getState() as RootState;
     const task = state.tasks.entities[rollforward.id]!;
     const tasks = Object.values(state.tasks.entities);
     if (state.tasks.newId == task.id) {
-      bkp.rollback.toDelete.push(task.id);
+      bkp.rollback.tasksDelete!.push(task.id);
       const taskData = JSON.parse(JSON.stringify(task));
       Object.assign(taskData, rollforward.changes);
       const newTaskIndex = task.index < 0 ? 0 : Math.round(task.index);
       taskData.index = newTaskIndex;
-      bkp.rollforward.toAdd.push(taskData);
+      bkp.rollforward.tasksAdd!.push(taskData);
       for (const t of tasks) {
         if (t.index >= newTaskIndex) {
-          _addToChangeStack(bkp.rollback.toChange, [
+          _addToChangeStack(bkp.rollback.tasksChange!, [
             { id: t.id, changes: { index: t.index } },
           ]);
-          _addToChangeStack(bkp.rollforward.toChange, [
+          _addToChangeStack(bkp.rollforward.tasksChange!, [
             { id: t.id, changes: { index: t.index + 1 } },
           ]);
         }
@@ -307,8 +336,8 @@ export const updateAndBackupTask = createAsyncThunk(
       if (!task.checked) {
         const changes = propagateChecked(state.tasks.entities, task.id, false);
         if (changes) {
-          _addToChangeStack(bkp.rollback.toChange, changes.rollback);
-          _addToChangeStack(bkp.rollforward.toChange, changes.rollforward);
+          _addToChangeStack(bkp.rollback.tasksChange!, changes.rollback);
+          _addToChangeStack(bkp.rollforward.tasksChange!, changes.rollforward);
         }
       }
       // thunkAPI.dispatch(setNewId(undefined));
@@ -322,17 +351,17 @@ export const updateAndBackupTask = createAsyncThunk(
         );
       }, 100);
     } else {
-      bkp.rollforward.toChange.push(rollforward);
-      bkp.rollback.toChange.push(rollback);
+      bkp.rollforward.tasksChange!.push(rollforward);
+      bkp.rollback.tasksChange!.push(rollback);
     }
     if (task.type == TaskType.SECTOR && rollforward.changes.color) {
       const tasks = Object.values(state.tasks.entities);
       const { children } = getAllChildren(tasks, rollforward.id);
       for (const child of children) {
-        _addToChangeStack(bkp.rollback.toChange, [
+        _addToChangeStack(bkp.rollback.tasksChange!, [
           { id: child.id, changes: { color: child.color } },
         ]);
-        _addToChangeStack(bkp.rollforward.toChange, [
+        _addToChangeStack(bkp.rollforward.tasksChange!, [
           { id: child.id, changes: { color: rollforward.changes.color } },
         ]);
       }
@@ -370,6 +399,13 @@ export const selectAllCurrentGalaxyTasksLength = createSelector(
   [selectAllCurrentGalaxyTasks],
   (tasks: Task[]): number => {
     return tasks.length;
+  }
+);
+
+export const selectAllCurrentGalaxySystemsIds = createSelector(
+  [selectAllCurrentGalaxyTasks],
+  (tasks: Task[]) => {
+    return tasks.filter((t) => t.type == TaskType.SYSTEM).map((t) => t.id);
   }
 );
 
@@ -463,9 +499,11 @@ export const tasksSlice = createSlice({
       tasksAdapter.upsertMany(state, [task, ...children]);
     },
     updateTasks: (state, { payload }: { payload: BackupAction }) => {
-      tasksAdapter.upsertMany(state, payload.toAdd);
-      tasksAdapter.removeMany(state, payload.toDelete);
-      tasksAdapter.updateMany(state, payload.toChange);
+      if (payload.tasksAdd) tasksAdapter.upsertMany(state, payload.tasksAdd);
+      if (payload.tasksDelete)
+        tasksAdapter.removeMany(state, payload.tasksDelete);
+      if (payload.tasksChange)
+        tasksAdapter.updateMany(state, payload.tasksChange);
     },
     setEdit: (state, { payload }: { payload: string | undefined }) => {
       state.edit = payload;
@@ -515,11 +553,16 @@ export const tasksSlice = createSlice({
       }
     });
 
-    builder.addCase(updateAndBackupTask.fulfilled, (state, action) => {
-      tasksAdapter.upsertMany(state, action.payload.toAdd);
-      tasksAdapter.removeMany(state, action.payload.toDelete);
-      tasksAdapter.updateMany(state, action.payload.toChange);
-    });
+    builder.addCase(
+      updateAndBackupTask.fulfilled,
+      (state, { payload }: { payload: BackupAction }) => {
+        if (payload.tasksAdd) tasksAdapter.upsertMany(state, payload.tasksAdd);
+        if (payload.tasksDelete)
+          tasksAdapter.removeMany(state, payload.tasksDelete);
+        if (payload.tasksChange)
+          tasksAdapter.updateMany(state, payload.tasksChange);
+      }
+    );
     builder.addCase(addTask.fulfilled, (state, action) => {
       const task = action.payload;
       if (state.newId && state.newId !== task.id) {
@@ -533,10 +576,15 @@ export const tasksSlice = createSlice({
       state.edit = task.id;
       state.focusId = task.id;
     });
-    builder.addCase(deleteTask.fulfilled, (state, action) => {
-      tasksAdapter.removeMany(state, action.payload.toDelete);
-      tasksAdapter.updateMany(state, action.payload.toChange);
-    });
+    builder.addCase(
+      deleteTask.fulfilled,
+      (state, { payload }: { payload: BackupAction }) => {
+        if (payload.tasksDelete)
+          tasksAdapter.removeMany(state, payload.tasksDelete);
+        if (payload.tasksChange)
+          tasksAdapter.updateMany(state, payload.tasksChange);
+      }
+    );
   },
 });
 

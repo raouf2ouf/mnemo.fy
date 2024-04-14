@@ -5,6 +5,7 @@ import { TaskColor, TaskType } from "./task.enums";
 export interface BasicSystemData extends BasicTaskData {
   type: TaskType.SYSTEM;
   hex?: number;
+  pinned?: boolean;
 }
 export interface SystemDataExport extends BasicSystemData, TaskDataExport {
   type: TaskType.SYSTEM;

@@ -2,9 +2,9 @@ import { BackupStep } from "@models/backup";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { RootState } from "./store";
 import { updateTasks } from "./tasks.slice";
-import { addToChangeStack } from "./backup.slice.utils";
 import { setCurrentGalaxySaveStatus } from "./galaxies.slice";
 import { SaveStatus } from "@models/galaxy";
+import { updateHexes } from "./hexes.slice";
 
 const MAX_BKP_LENGTH = 9;
 
@@ -26,6 +26,9 @@ export const rollback = createAsyncThunk(
 
     thunkAPI.dispatch(updateTasks(step.rollback));
     thunkAPI.dispatch(setCurrentGalaxySaveStatus(SaveStatus.NEED_TO_SAVE));
+    if (step.rollback.hexesChange) {
+      thunkAPI.dispatch(updateHexes(step.rollback.hexesChange));
+    }
 
     return { bkps, bkpsForward };
   }
@@ -48,6 +51,9 @@ export const rollforward = createAsyncThunk(
 
     thunkAPI.dispatch(updateTasks(step.rollforward));
     thunkAPI.dispatch(setCurrentGalaxySaveStatus(SaveStatus.NEED_TO_SAVE));
+    if (step.rollforward.hexesChange) {
+      thunkAPI.dispatch(updateHexes(step.rollforward.hexesChange));
+    }
 
     return { bkps, bkpsForward };
   }

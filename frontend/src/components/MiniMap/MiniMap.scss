@@ -1,0 +1,26 @@
+.mini-map-container {
+  .mini-map {
+    padding: 16px 8px;
+    background-color: var(--background-color-dark);
+    svg {
+      .hex {
+        fill: rgba(var(--background-color-light-rgb), 0.3);
+        stroke-width: 10px;
+        stroke: var(--background-color-light);
+        &.used {
+          fill: transparent;
+          stroke: none;
+        }
+      }
+      .system {
+        polygon {
+          fill: var(--color);
+          stroke: var(--color);
+        }
+        circle {
+          fill: var(--color);
+        }
+      }
+    }
+  }
+}

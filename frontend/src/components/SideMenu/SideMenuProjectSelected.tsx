@@ -2,6 +2,7 @@ import { IonContent, IonFooter, IonLabel } from "@ionic/react";
 import { memo } from "react";
 import Tooltip from "../Tooltip/Tooltip";
 import Stats from "./Stats";
+import MiniMap from "@components/MiniMap/MiniMap";
 
 type Props = {};
 
@@ -16,6 +17,7 @@ const SideMenuWithProjectSelected: React.FC<Props> = ({}) => {
               <Tooltip text=""></Tooltip>
             </IonLabel>
           </div>
+          <MiniMap />
         </div>
       </IonContent>
       <IonFooter>

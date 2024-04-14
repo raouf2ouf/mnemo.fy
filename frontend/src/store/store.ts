@@ -4,11 +4,13 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import tasksSlice from "./tasks.slice";
 import galaxiesSlice from "./galaxies.slice";
 import backupSlice from "./backup.slice";
+import hexesSlice from "./hexes.slice";
 
 const rootReducer = combineReducers({
   galaxies: galaxiesSlice,
   tasks: tasksSlice,
   backup: backupSlice,
+  hexes: hexesSlice,
 });
 
 export const setupStore = (preloadedState?: any) => {

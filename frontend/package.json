@@ -30,6 +30,7 @@
     "react-router": "^5.3.4",
     "react-router-dom": "^5.3.4",
     "react-toastify": "^10.0.5",
+    "tinyqueue": "^2.0.3",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

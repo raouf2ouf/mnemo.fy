@@ -1,12 +1,13 @@
-import { Hex, Point } from "./space";
+import { Hex, Point } from "./hex";
 
 export function buildSpaceFlatHexes(
   size: number,
   nbrRows: number,
   nbrCols: number
-): Hex[] {
+): { hexes: Hex[]; starts: number[] } {
   const halfSize = size / 2;
   const quarterSize = size / 4;
+
   const X = nbrCols * 3 + 1 + 4;
   const Y = nbrRows * 2 + 1 + 2;
   const grid: Point[][] = [];
@@ -40,13 +41,23 @@ export function buildSpaceFlatHexes(
         row,
         corners: [c1, c2, c3, c4, c5, c6],
         center: grid[offsetX + 2][offsetY],
-        used: false,
         visible: row < nbrRows - 1 || odd,
       };
       hexes.push(hex);
     }
   }
-  return hexes;
+  const qr = nbrRows / 4;
+  const qc = nbrCols / 4;
+  const starts: number[] = [
+    rowColToId(Math.floor(qr), Math.floor(qc), nbrRows), // top left
+    rowColToId(Math.floor(3 * qr), Math.floor(3 * qc), nbrRows), // bottom right
+    rowColToId(Math.floor(qr), Math.floor(3 * qc), nbrRows), // top right
+    rowColToId(Math.floor(3 * qr), Math.floor(qc), nbrRows), // bottom left
+    rowColToId(Math.floor(2 * qr), Math.floor(qc), nbrRows), // middle left
+    rowColToId(Math.floor(2 * qr), Math.floor(qc * 3), nbrRows), // middle right
+  ];
+
+  return { hexes, starts };
 }
 
 export function rowColToId(row: number, col: number, nbrRows: number) {
@@ -63,7 +74,29 @@ export function idToRowCol(
   };
 }
 
-export function getRingNeighborsRowCol(
+export function pointToString(point: Point): string {
+  return `${point.x},${point.y}`;
+}
+
+export function stringToPoint(str: string): Point {
+  const s = str.split(",");
+  return { x: Number(s[0]), y: Number(s[1]) };
+}
+
+export function pointsToString(points: Point[]): string {
+  return points.map((p) => pointToString(p)).join(" ");
+}
+
+export function isValidRowCol(
+  row: number,
+  col: number,
+  nbrRows: number,
+  nbrCols: number
+): boolean {
+  return row >= 0 && row < nbrRows && col >= 0 && col < nbrCols;
+}
+
+export function getAllRingNeighborsRowCol(
   id: number,
   nbrRows: number
 ): { row: number; col: number }[] {
@@ -79,22 +112,37 @@ export function getRingNeighborsRowCol(
   ];
 }
 
-export function getRingNeighbors(id: number, nbrRows: number): number[] {
-  const ring = getRingNeighborsRowCol(id, nbrRows);
+export function getRingNeighborsRowCol(
+  id: number,
+  nbrRows: number,
+  nbrCols: number
+): { row: number; col: number }[] {
+  return getAllRingNeighborsRowCol(id, nbrRows).filter((coords) =>
+    isValidRowCol(coords.row, coords.col, nbrRows, nbrCols)
+  );
+}
+
+export function getRingNeighbors(
+  id: number,
+  nbrRows: number,
+  nbrCols: number
+): number[] {
+  const ring = getRingNeighborsRowCol(id, nbrRows, nbrCols);
   return ring.map(({ row, col }) => rowColToId(row, col, nbrRows));
 }
 
 export function getFreeNeighbors(
-  hexes: Hex[],
   id: number,
-  nbrRows: number
+  hexes: Hex[],
+  nbrRows: number,
+  nbrCols: number
 ): number[] {
   const validNeighbors: number[] = [];
-  const neighbors1 = getRingNeighbors(id, nbrRows); // first ring of neighbors
+  const neighbors1 = getRingNeighbors(id, nbrRows, nbrCols); // first ring of neighbors
   for (let i = 0; i < neighbors1.length; ++i) {
     const n = neighbors1[i];
     if (n >= 0 && n < hexes.length) {
-      if (!hexes[n].used) {
+      if (hexes[n].visible && !hexes[n].sectorId) {
         validNeighbors.push(n);
       }
     }
@@ -105,13 +153,13 @@ export function getFreeNeighbors(
   for (let i = 0; i < neighbors1.length; ++i) {
     const n = neighbors1[i];
     if (n >= 0 && n < hexes.length) {
-      const ns = getRingNeighbors(n, nbrRows);
+      const ns = getRingNeighbors(n, nbrRows, nbrCols);
       neighbors2 = [...neighbors2, ...ns];
     }
   }
   for (const neighbor of neighbors2) {
     if (neighbor >= 0 && neighbor < hexes.length) {
-      if (!hexes[neighbor].used) {
+      if (!hexes[neighbor].sectorId) {
         validNeighbors.push(neighbor);
       }
     }

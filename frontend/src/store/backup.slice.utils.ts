@@ -1,4 +1,6 @@
-import { Change } from "@models/backup";
+import { HexChange, TaskChange } from "@models/backup";
+
+type Change = HexChange | TaskChange;
 
 export function _addToChangeStack(stack: Change[], changes: Change[]): void {
   for (const change of changes) {

@@ -4,7 +4,6 @@ import {
   createEntityAdapter,
   createSelector,
   createSlice,
-  current,
 } from "@reduxjs/toolkit";
 import { inflateTasks } from "./tasks.slice";
 import { RootState } from "./store";
@@ -29,11 +28,36 @@ export const saveCurrentGalaxyLocally = createAsyncThunk(
   }
 );
 
+export const downloadCurrentGalaxy = createAsyncThunk(
+  "galaxies/downloadCurrentGalaxy",
+  async (_, thunkAPI): Promise<void> => {
+    const state = thunkAPI.getState() as RootState;
+    const currentGalaxyId = state.galaxies.currentGalaxyId;
+    if (!currentGalaxyId) return;
+    const currentGalaxy = state.galaxies.entities[currentGalaxyId];
+    const tasks = Object.values(state.tasks.entities)
+      .filter((t) => t.galaxyId == currentGalaxyId && t.name.length > 0)
+      .sort((a, b) => a.index - b.index);
+    const galaxyData = deflateGalaxy(currentGalaxy, tasks);
+    const jsonStr = JSON.stringify(galaxyData);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${currentGalaxy.name}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+);
+
 export const setCurrentGalaxy = createAsyncThunk(
   "galaxies/setCurrentGalaxy",
-  async (id: string, thunkAPI): Promise<string> => {
+  async (id: string, thunkAPI): Promise<string | undefined> => {
     const state = thunkAPI.getState() as RootState;
     const galaxyData = state.galaxies.entities[id];
+    if (state.galaxies.currentGalaxyId == id) return;
     if (galaxyData) {
       thunkAPI.dispatch(
         inflateTasks({ data: galaxyData.tasks, galaxyId: galaxyData.id })
@@ -135,7 +159,9 @@ export const galaxiesSlice = createSlice({
       state.currentGalaxyId = action.payload.id;
     });
     builder.addCase(setCurrentGalaxy.fulfilled, (state, action) => {
-      state.currentGalaxyId = action.payload;
+      if (action.payload) {
+        state.currentGalaxyId = action.payload;
+      }
     });
     builder.addCase(setCurrentGalaxy.rejected, (state, action) => {
       toast.error(`Galaxy not found`);

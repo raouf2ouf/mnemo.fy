@@ -1,4 +1,4 @@
-import { BackupStep, Change } from "@models/backup";
+import { BackupStep, TaskChange } from "@models/backup";
 import { inflateMoon } from "@models/task/moon";
 import { inflatePlanet } from "@models/task/planet";
 import { SectorDataExport, inflateSector } from "@models/task/sector";
@@ -78,9 +78,9 @@ export const propagateChecked = (
   entities: Record<string, Task>,
   taskId: string,
   toggle?: boolean
-): { rollback: Change[]; rollforward: Change[] } | undefined => {
-  const rollback: Change[] = [];
-  const rollforward: Change[] = [];
+): { rollback: TaskChange[]; rollforward: TaskChange[] } | undefined => {
+  const rollback: TaskChange[] = [];
+  const rollforward: TaskChange[] = [];
   const task = entities[taskId]!;
   const previousValue = task.checked;
   const newValue = toggle === undefined ? !task.checked : toggle;
@@ -153,8 +153,8 @@ export const morphTask = (
   newDisplayIdx: number
 ): BackupStep | undefined => {
   tasks.sort((a, b) => a.index - b.index);
-  const rollback: Change[] = [];
-  const rollforward: Change[] = [];
+  const rollback: TaskChange[] = [];
+  const rollforward: TaskChange[] = [];
 
   const { children, rest } = getAllChildren(tasks, task.id);
 
@@ -234,8 +234,8 @@ export const morphTask = (
   }
 
   return {
-    rollback: { toChange: rollback, toAdd: [], toDelete: [] },
-    rollforward: { toChange: rollforward, toAdd: [], toDelete: [] },
+    rollback: { tasksChange: rollback },
+    rollforward: { tasksChange: rollforward },
   };
 };
 
@@ -245,9 +245,9 @@ export function morph(
   newType: TaskType,
   parentId: string,
   parentColor: TaskColor
-): { rollback: Change[]; rollforward: Change[] } {
-  const rollback: Change[] = [];
-  const rollforward: Change[] = [];
+): { rollback: TaskChange[]; rollforward: TaskChange[] } {
+  const rollback: TaskChange[] = [];
+  const rollforward: TaskChange[] = [];
   if (newType > TaskType.MOON) {
     newType = TaskType.MOON;
   }
@@ -396,8 +396,8 @@ export function moveTaskLeftHelper(
   isNew: boolean
 ): { bkp: BackupStep; newParentId: string } | undefined {
   const { rollback, rollforward }: BackupStep = {
-    rollback: { toChange: [], toAdd: [], toDelete: [] },
-    rollforward: { toChange: [], toAdd: [], toDelete: [] },
+    rollback: { tasksChange: [] },
+    rollforward: { tasksChange: [] },
   };
   let parent: Task | undefined;
   const newType = task.type + 1;
@@ -414,8 +414,8 @@ export function moveTaskLeftHelper(
 
   if (parent) {
     const morphRes = morph(tasks, task, newType, parent.id, parent.color);
-    _addToChangeStack(rollback.toChange, morphRes.rollback);
-    _addToChangeStack(rollforward.toChange, morphRes.rollforward);
+    _addToChangeStack(rollback.tasksChange!, morphRes.rollback);
+    _addToChangeStack(rollforward.tasksChange!, morphRes.rollforward);
     return { bkp: { rollback, rollforward }, newParentId: parent.id };
   }
 }
@@ -426,8 +426,8 @@ export function moveTaskRightHelper(
   isNew: boolean
 ): { bkp: BackupStep; newParentId: string } | undefined {
   const { rollback, rollforward }: BackupStep = {
-    rollback: { toChange: [], toAdd: [], toDelete: [] },
-    rollforward: { toChange: [], toAdd: [], toDelete: [] },
+    rollback: { tasksChange: [] },
+    rollforward: { tasksChange: [] },
   };
   const newType = task.type - 1;
   if (newType < TaskType.SECTOR) return;
@@ -444,13 +444,13 @@ export function moveTaskRightHelper(
       i++
     ) {
       const t = tasks[i];
-      _addToChangeStack(rollback.toChange, [
+      _addToChangeStack(rollback.tasksChange!, [
         {
           id: t.id,
           changes: { index: t.index },
         },
       ]);
-      _addToChangeStack(rollforward.toChange, [
+      _addToChangeStack(rollforward.tasksChange!, [
         {
           id: t.id,
           changes: { index: t.index - (currentTaskChildren.length + 1) },
@@ -461,25 +461,25 @@ export function moveTaskRightHelper(
   // push current task children
   const newTaskIndex =
     sibling.index + siblingChildren.length - currentTaskChildren.length;
-  _addToChangeStack(rollback.toChange, [
+  _addToChangeStack(rollback.tasksChange!, [
     { id: task.id, changes: { index: task.index } },
   ]);
-  _addToChangeStack(rollforward.toChange, [
+  _addToChangeStack(rollforward.tasksChange!, [
     { id: task.id, changes: { index: newTaskIndex } },
   ]);
   for (let i = 0; i < currentTaskChildren.length; i++) {
     const t = currentTaskChildren[i];
-    _addToChangeStack(rollback.toChange, [
+    _addToChangeStack(rollback.tasksChange!, [
       { id: t.id, changes: { index: t.index } },
     ]);
-    _addToChangeStack(rollforward.toChange, [
+    _addToChangeStack(rollforward.tasksChange!, [
       { id: t.id, changes: { index: newTaskIndex + i + 1 } },
     ]);
   }
 
   const morphRes = morph(tasks, task, newType, sibling.parent!, task.color);
-  _addToChangeStack(rollback.toChange, morphRes.rollback);
-  _addToChangeStack(rollforward.toChange, morphRes.rollforward);
+  _addToChangeStack(rollback.tasksChange!, morphRes.rollback);
+  _addToChangeStack(rollforward.tasksChange!, morphRes.rollforward);
   return { bkp: { rollback, rollforward }, newParentId: sibling.parent! };
 }
 
@@ -489,8 +489,8 @@ export function moveTaskUpHelper(
   isNew: boolean
 ): { bkp: BackupStep; newParentId: string } | undefined {
   const { rollback, rollforward }: BackupStep = {
-    rollback: { toChange: [], toAdd: [], toDelete: [] },
-    rollforward: { toChange: [], toAdd: [], toDelete: [] },
+    rollback: { tasksChange: [] },
+    rollforward: { tasksChange: [] },
   };
 
   let parent: Task | undefined;
@@ -529,28 +529,28 @@ export function moveTaskUpHelper(
   }
   const { children } = getAllChildren(tasks, task.id);
 
-  _addToChangeStack(rollback.toChange, [
+  _addToChangeStack(rollback.tasksChange!, [
     { id: task.id, changes: { index: task.index, parent: task.parent } },
   ]);
-  _addToChangeStack(rollforward.toChange, [
+  _addToChangeStack(rollforward.tasksChange!, [
     { id: task.id, changes: { index: newIndex, parent: parentId } },
   ]);
   // push between
   for (let i = task.index - 1; i >= newIndex; i--) {
     const t = tasks[i];
-    _addToChangeStack(rollback.toChange, [
+    _addToChangeStack(rollback.tasksChange!, [
       { id: t.id, changes: { index: t.index } },
     ]);
-    _addToChangeStack(rollforward.toChange, [
+    _addToChangeStack(rollforward.tasksChange!, [
       { id: t.id, changes: { index: t.index + children.length + 1 } },
     ]);
   }
   for (let i = 0; i < children.length; i++) {
     const t = children[i];
-    _addToChangeStack(rollback.toChange, [
+    _addToChangeStack(rollback.tasksChange!, [
       { id: t.id, changes: { index: t.index } },
     ]);
-    _addToChangeStack(rollforward.toChange, [
+    _addToChangeStack(rollforward.tasksChange!, [
       { id: t.id, changes: { index: newIndex + i + 1 } },
     ]);
   }
@@ -564,8 +564,8 @@ export function moveTaskDownHelper(
   isNew: boolean
 ): { bkp: BackupStep; newParentId: string } | undefined {
   const { rollback, rollforward }: BackupStep = {
-    rollback: { toChange: [], toAdd: [], toDelete: [] },
-    rollforward: { toChange: [], toAdd: [], toDelete: [] },
+    rollback: { tasksChange: [] },
+    rollforward: { tasksChange: [] },
   };
 
   let parent: Task | undefined;
@@ -600,27 +600,27 @@ export function moveTaskDownHelper(
   // bring up between
   for (let i = task.index + children.length + 1; i <= newIndex; i++) {
     const t = tasks[i];
-    _addToChangeStack(rollback.toChange, [
+    _addToChangeStack(rollback.tasksChange!, [
       { id: t.id, changes: { index: t.index } },
     ]);
-    _addToChangeStack(rollforward.toChange, [
+    _addToChangeStack(rollforward.tasksChange!, [
       { id: t.id, changes: { index: t.index - children.length - 1 } },
     ]);
   }
 
   newIndex = newIndex - children.length;
-  _addToChangeStack(rollback.toChange, [
+  _addToChangeStack(rollback.tasksChange!, [
     { id: task.id, changes: { index: task.index, parent: task.parent } },
   ]);
-  _addToChangeStack(rollforward.toChange, [
+  _addToChangeStack(rollforward.tasksChange!, [
     { id: task.id, changes: { index: newIndex, parent: parentId } },
   ]);
   for (let i = 0; i < children.length; i++) {
     const t = children[i];
-    _addToChangeStack(rollback.toChange, [
+    _addToChangeStack(rollback.tasksChange!, [
       { id: t.id, changes: { index: t.index } },
     ]);
-    _addToChangeStack(rollforward.toChange, [
+    _addToChangeStack(rollforward.tasksChange!, [
       { id: t.id, changes: { index: newIndex + i + 1 } },
     ]);
   }
