@@ -14,7 +14,6 @@ export interface Hex {
   row: number;
   corners: Point[];
   center: Point;
-  visible: boolean;
   sectorId?: string;
   userControlled?: boolean;
 }

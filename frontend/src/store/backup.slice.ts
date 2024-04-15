@@ -30,8 +30,8 @@ export const rollback = createAsyncThunk(
     if (step.rollback.hexesChange) {
       thunkAPI.dispatch(updateHexes(step.rollback.hexesChange));
     }
-    if (step.rollforward.territories) {
-      thunkAPI.dispatch(updateTerritories(step.rollforward.territories));
+    if (step.rollback.territories) {
+      thunkAPI.dispatch(updateTerritories(step.rollback.territories));
     }
 
     return { bkps, bkpsForward };

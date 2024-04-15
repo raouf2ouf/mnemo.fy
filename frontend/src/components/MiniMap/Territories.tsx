@@ -7,7 +7,6 @@ const Territories: React.FC<Props> = ({}) => {
   const territoriesIds: string[] = useAppSelector(
     (state) => state.territories.ids
   );
-  console.log("territoriesids", territoriesIds);
   return (
     <>
       {territoriesIds.map((id) => {

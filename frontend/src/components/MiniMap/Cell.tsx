@@ -14,7 +14,11 @@ const Cell: React.FC<Props> = ({ id }) => {
     <polygon
       points={pointsToString(hex.corners)}
       className={`hex ${hex.sectorId && "used"}`}
-    />
+    >
+      <text fill="white" fontSize="100">
+        {id}
+      </text>
+    </polygon>
   );
 };
 

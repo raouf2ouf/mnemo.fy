@@ -12,11 +12,9 @@ import { Territory, TerritorySection } from "@models/territory";
 import { buildShapes, computeTitlePositionSize } from "@models/territoy.utils";
 
 export function buildPointsMapping(
-  hexes: Hex[],
   targetHexes: Hex[],
   nbrRows: number,
-  nbrCols: number,
-  isValidNeighbor: (hex: Hex) => boolean
+  isDifferentNeighbor: (row: number, col: number) => boolean
 ): Map<string, string> {
   const points: Map<string, string> = new Map<string, string>();
   for (const hex of targetHexes) {
@@ -25,14 +23,11 @@ export function buildPointsMapping(
       nbrRows
     );
     neighbors.forEach((n, i) => {
-      if (isValidRowCol(n.row, n.col, nbrRows, nbrCols)) {
-        const neighborHex = hexes[rowColToId(n.row, n.col, nbrRows)];
-        if (isValidNeighbor(neighborHex)) {
-          points.set(
-            pointToString(hex.corners[(i + 1) % 6]),
-            pointToString(hex.corners[(i + 2) % 6])
-          );
-        }
+      if (isDifferentNeighbor(n.row, n.col)) {
+        points.set(
+          pointToString(hex.corners[(i + 1) % 6]),
+          pointToString(hex.corners[(i + 2) % 6])
+        );
       }
     });
   }
@@ -88,18 +83,24 @@ export function buildTerritories(
     );
 
     const points: Map<string, string> = buildPointsMapping(
-      hexes,
       sectorHexes,
       nbrRows,
-      nbrCols,
-      (hex: Hex) => hex.sectorId == sector.id
+      (row: number, col: number) => {
+        if (!isValidRowCol(row, col, nbrRows, nbrCols)) return true;
+        const idx = rowColToId(row, col, nbrRows);
+        const hex = hexes[idx];
+        return hex.sectorId !== sector.id;
+      }
     );
     const userPoints: Map<string, string> = buildPointsMapping(
-      hexes,
       userHexes,
       nbrRows,
-      nbrCols,
-      (hex: Hex) => hex.sectorId == sector.id && hex.userControlled == true
+      (row: number, col: number) => {
+        const idx = rowColToId(row, col, nbrRows);
+        if (!isValidRowCol(row, col, nbrRows, nbrCols)) return true;
+        const hex = hexes[idx];
+        return hex.sectorId !== sector.id || hex.userControlled != true;
+      }
     );
     territories.push(buildTerritory(sector.id, points, userPoints));
   }

@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import { SectorDataExport } from "@models/task/sector";
+import { Sector, SectorDataExport } from "@models/task/sector";
 import { Task } from "@models/task/task";
 import {
   createAsyncThunk,
@@ -24,11 +24,16 @@ import { backup } from "./backup.slice";
 import { BackupAction, BackupStep, TaskChange } from "@models/backup";
 import { TaskColor, TaskType } from "@models/task/task.enums";
 import { toast } from "react-toastify";
-import { _addToChangeStack } from "./backup.slice.utils";
-import { setHexesData } from "./hexes.slice";
-import { proposeSystemPosition } from "./hexes.slice.utils";
+import { _addToChangeStack, applyTaskChanges } from "./backup.slice.utils";
+import { setHexesData, updateHexes } from "./hexes.slice";
+import {
+  computeHexesControl,
+  proposeSystemPosition,
+} from "./hexes.slice.utils";
 import { buildSpaceFlatHexes } from "@models/hex.utils";
 import { HEX_SIZE, NBR_COLS, NBR_ROWS } from "@models/hex";
+import { buildTerritories } from "./territories.slice.utils";
+import { updateTerritories } from "./territories.slice";
 
 // API
 export const addTask = createAsyncThunk(
@@ -124,7 +129,9 @@ export const inflateTasks = createAsyncThunk(
     },
     thunkAPI
   ) => {
-    const { hexes, starts } = buildSpaceFlatHexes(HEX_SIZE, NBR_ROWS, NBR_COLS);
+    const nbrRows = NBR_ROWS;
+    const nbrCols = NBR_COLS;
+    const { hexes, starts } = buildSpaceFlatHexes(HEX_SIZE, nbrRows, nbrCols);
     const tasks = inflateSectorsAndChildren(galaxyId, data);
     let idx = 0;
     for (const task of tasks) {
@@ -138,17 +145,26 @@ export const inflateTasks = createAsyncThunk(
             task,
             hexes,
             starts,
-            NBR_ROWS,
-            NBR_COLS
+            nbrRows,
+            nbrCols
           );
         }
         const hex = hexes[task.hex];
         hex.sectorId = task.parent;
       }
     }
+
+    computeHexesControl(hexes, tasks);
+    const territories = buildTerritories(
+      tasks.filter((t) => t.type == TaskType.SECTOR) as Sector[],
+      hexes,
+      nbrRows,
+      nbrCols
+    );
     thunkAPI.dispatch(
       setHexesData({ hexes, starts, nbrRows: NBR_ROWS, nbrCols: NBR_COLS })
     );
+    thunkAPI.dispatch(updateTerritories(territories));
     return tasks;
   }
 );
@@ -162,15 +178,45 @@ export const toggleChecked = createAsyncThunk(
     const state = thunkAPI.getState() as RootState;
     const data = propagateChecked(state.tasks.entities, taskId, toggle);
     if (!data) return;
-
-    thunkAPI.dispatch(
-      backup({
-        rollback: { tasksChange: data.rollback },
-        rollforward: { tasksChange: data.rollforward },
-      })
+    const bkp: BackupStep = {
+      rollback: { tasksChange: data.rollback },
+      rollforward: { tasksChange: data.rollforward },
+    };
+    const tasks = applyTaskChanges(
+      Object.values(state.tasks.entities),
+      data.rollforward,
+      [],
+      []
     );
+    const hexes = Object.values(state.hexes.entities).map((hex) => {
+      return { ...hex };
+    });
+    const { nbrRows, nbrCols } = state.hexes;
+    const { rollbackHexes, rollforwardHexes } = computeHexesControl(
+      hexes,
+      tasks
+    );
+    bkp.rollback.hexesChange = rollbackHexes;
+    bkp.rollforward.hexesChange = rollforwardHexes;
 
-    return data.rollforward;
+    const newTerritories = buildTerritories(
+      tasks.filter((t) => t.type == TaskType.SECTOR) as Sector[],
+      hexes,
+      nbrRows,
+      nbrCols
+    );
+    bkp.rollback.territories = Object.values(state.territories.entities).map(
+      (t) => {
+        return { ...t };
+      }
+    );
+    bkp.rollforward.territories = newTerritories;
+
+    thunkAPI.dispatch(updateHexes(bkp.rollforward.hexesChange));
+    thunkAPI.dispatch(updateTerritories(bkp.rollforward.territories));
+    thunkAPI.dispatch(backup(bkp));
+
+    return bkp.rollforward.tasksChange;
   }
 );
 

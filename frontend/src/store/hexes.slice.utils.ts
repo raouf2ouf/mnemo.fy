@@ -58,9 +58,9 @@ export function computeHexesControl(
 ): { rollbackHexes: HexChange[]; rollforwardHexes: HexChange[] } {
   const rollbackHexes: HexChange[] = [];
   const rollforwardHexes: HexChange[] = [];
-  const influenceRadius = 1;
+  const influenceRadius = 2;
   const radius = (influenceRadius * HEX_SIZE) / 2;
-  const threshold = 1 / 10;
+  const threshold = 0.2;
 
   const systemDataMap = new Map<
     string,
@@ -91,55 +91,54 @@ export function computeHexesControl(
   }
 
   for (const hex of hexes) {
-    if (hex.visible) {
-      const center = hex.center;
-      const strengthMap = new Map<
-        string,
-        { sectorId: string; sectorStrength: number; userStrength: number }
-      >();
-      for (const system of systems) {
-        const { strength, control } = systemDataMap.get(system.id)!;
-        const coords = hexes[system.hex!].center;
-        const dx = Math.abs(coords.x - center.x);
-        const dy = Math.abs(coords.y - center.y);
-        let sectorStrength =
-          Math.pow(strength * radius, 2) / (dx * dx + dy * dy + 0.0001);
-        if (sectorStrength > threshold) {
-          let strengthObject = {
-            sectorId: system.parent!,
-            sectorStrength: 0,
-            userStrength: 0,
-          };
-          if (strengthMap.has(system.parent!)) {
-            strengthObject = strengthMap.get(system.parent!)!;
-          } else {
-            strengthMap.set(system.parent!, strengthObject);
-          }
-          strengthObject.sectorStrength += sectorStrength;
-          strengthObject.userStrength += sectorStrength * control;
+    const center = hex.center;
+    const strengthMap = new Map<
+      string,
+      { sectorId: string; sectorStrength: number; userStrength: number }
+    >();
+    for (const system of systems) {
+      const { strength, control } = systemDataMap.get(system.id)!;
+      const coords = hexes[system.hex!].center;
+      const dx = Math.abs(coords.x - center.x);
+      const dy = Math.abs(coords.y - center.y);
+      let sectorStrength =
+        Math.pow(strength * radius, 2) / (dx * dx + dy * dy + 0.0001);
+      if (sectorStrength > threshold) {
+        let strengthObject = {
+          sectorId: system.parent!,
+          sectorStrength: 0,
+          userStrength: 0,
+        };
+        if (strengthMap.has(system.parent!)) {
+          strengthObject = strengthMap.get(system.parent!)!;
+        } else {
+          strengthMap.set(system.parent!, strengthObject);
         }
+        strengthObject.sectorStrength += sectorStrength;
+        strengthObject.userStrength += sectorStrength * control;
       }
-      const sotredStrength = Array.from(strengthMap.values()).sort(
-        (a, b) => b.sectorStrength - a.sectorStrength
-      );
-      rollbackHexes.push({
-        id: hex.id,
-        changes: { sectorId: hex.sectorId, userControlled: hex.userControlled },
-      });
-      if (sotredStrength.length > 0) {
-        const winning = sotredStrength[0];
-        // changes needed;
-        hex.sectorId = winning.sectorId;
-        hex.userControlled = winning.userStrength > winning.sectorStrength / 2;
-      } else {
-        hex.sectorId = undefined;
-        hex.userControlled = false;
-      }
-      rollforwardHexes.push({
-        id: hex.id,
-        changes: { sectorId: hex.sectorId, userControlled: hex.userControlled },
-      });
     }
+    const sotredStrength = Array.from(strengthMap.values()).sort(
+      (a, b) => b.sectorStrength - a.sectorStrength
+    );
+    rollbackHexes.push({
+      id: hex.id,
+      changes: { sectorId: hex.sectorId, userControlled: hex.userControlled },
+    });
+
+    if (sotredStrength.length > 0) {
+      const winning = sotredStrength[0];
+      // changes needed;
+      hex.sectorId = winning.sectorId;
+      hex.userControlled = winning.userStrength > winning.sectorStrength * 0.75;
+    } else {
+      hex.sectorId = undefined;
+      hex.userControlled = false;
+    }
+    rollforwardHexes.push({
+      id: hex.id,
+      changes: { sectorId: hex.sectorId, userControlled: hex.userControlled },
+    });
   }
   return { rollforwardHexes, rollbackHexes };
 }

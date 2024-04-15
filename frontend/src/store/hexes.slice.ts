@@ -7,7 +7,10 @@ import {
 } from "@reduxjs/toolkit";
 import { RootState } from "./store";
 import { TaskType } from "@models/task/task.enums";
-import { proposeSystemPosition } from "./hexes.slice.utils";
+import {
+  computeHexesControl,
+  proposeSystemPosition,
+} from "./hexes.slice.utils";
 import { BackupStep, HexChange } from "@models/backup";
 import { System } from "@models/task/system";
 import { _addToChangeStack } from "./backup.slice.utils";
@@ -36,7 +39,6 @@ export const loadHexes = createAsyncThunk(
 export const refreshPositions = createAsyncThunk(
   "hexes/refreshPositions",
   async (_, thunkAPI): Promise<HexChange[]> => {
-    console.log("refreshing positions");
     const state = thunkAPI.getState() as RootState;
     const { nbrRows, nbrCols, starts } = state.hexes;
     const hexes = Object.values(state.hexes.entities).map((hex) => {
@@ -98,15 +100,19 @@ export const refreshPositions = createAsyncThunk(
       }
     }
 
+    const { rollbackHexes, rollforwardHexes } = computeHexesControl(
+      hexes,
+      tasks
+    );
+    _addToChangeStack(bkp.rollback.hexesChange!, rollbackHexes);
+    _addToChangeStack(bkp.rollforward.hexesChange!, rollforwardHexes);
+
     const newTerritories = buildTerritories(sectors, hexes, nbrRows, nbrCols);
     const oldTerritories = Object.values(state.territories.entities).map(
       (t) => {
         return { ...t };
       }
     );
-
-    console.log("old Territories", oldTerritories);
-    console.log("newTerritories", newTerritories);
 
     bkp.rollback.territories = oldTerritories;
     bkp.rollforward.territories = newTerritories;

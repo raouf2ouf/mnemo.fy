@@ -41,7 +41,6 @@ export function buildSpaceFlatHexes(
         row,
         corners: [c1, c2, c3, c4, c5, c6],
         center: grid[offsetX + 2][offsetY],
-        visible: row < nbrRows - 1 || odd,
       };
       hexes.push(hex);
     }
@@ -142,7 +141,7 @@ export function getFreeNeighbors(
   for (let i = 0; i < neighbors1.length; ++i) {
     const n = neighbors1[i];
     if (n >= 0 && n < hexes.length) {
-      if (hexes[n].visible && !hexes[n].sectorId) {
+      if (!hexes[n].sectorId) {
         validNeighbors.push(n);
       }
     }

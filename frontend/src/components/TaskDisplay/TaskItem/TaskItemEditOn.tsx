@@ -112,11 +112,7 @@ const TaskItemEditOn: React.FC<Props> = ({
   }
 
   function handleDescriptionKeydown(e: React.KeyboardEvent) {
-    if (e.code == "Enter") {
-      e.stopPropagation();
-      const value = (e.target as any).value;
-      confirm();
-    } else if (e.code != "Escape") {
+    if (e.code != "Escape") {
       e.stopPropagation();
     }
   }
