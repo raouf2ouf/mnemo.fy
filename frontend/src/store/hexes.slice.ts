@@ -78,6 +78,10 @@ export const refreshPositions = createAsyncThunk(
       }
     }
 
+    for (const hex of hexes) {
+      hex.sectorId = undefined;
+    }
+
     for (const system of systems) {
       if (!system.pinned) {
         const hexId = proposeSystemPosition(

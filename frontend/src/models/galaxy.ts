@@ -2,6 +2,9 @@ import { v4 as uuid } from "uuid";
 import { TaskColor, TaskType } from "./task/task.enums";
 import { Sector, SectorDataExport, deflateSector } from "./task/sector";
 import { Task } from "./task/task";
+import { Territory } from "./territory";
+import { System } from "./task/system";
+import { Hex } from "./hex";
 
 /**
  * Galaxy themes
@@ -39,8 +42,9 @@ interface BasicGalaxyData {
   category: GalaxyCategory;
   date: number;
   lastServerDate?: number;
-  lastModificationData?: number;
+  lastModificationDate?: number;
   saveStatus?: SaveStatus;
+  minimap?: { territories: Territory[]; systems: System[]; hexes: Hex[] };
 }
 
 export interface GalaxyDataExport extends BasicGalaxyData {
@@ -64,7 +68,18 @@ export function deflateGalaxy(
   for (const child of children) {
     deflatedChildren.push(deflateSector(child as Sector, rest));
   }
-  return { ...galaxy, tasks: deflatedChildren };
+  return {
+    id: galaxy.id,
+    name: galaxy.name,
+    description: galaxy.description,
+    theme: galaxy.theme,
+    discoverable: galaxy.discoverable,
+    category: galaxy.category,
+    date: galaxy.date,
+    lastServerDate: galaxy.lastServerDate,
+    lastModificationDate: galaxy.lastModificationDate,
+    tasks: deflatedChildren,
+  };
 }
 
 export const createNewGalaxy = (

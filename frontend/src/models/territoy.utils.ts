@@ -2,7 +2,7 @@ import Queue from "tinyqueue";
 
 import { Point } from "./hex";
 import { Shape } from "./territory";
-import { pointToString, pointsToString, stringToPoint } from "./hex.utils";
+import { stringToPoint } from "./hex.utils";
 
 export function computeMinMax(points: Point[]): { min: Point; max: Point } {
   const ps = [...points].sort((a, b) => a.x - b.x);

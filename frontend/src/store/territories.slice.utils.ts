@@ -5,7 +5,6 @@ import {
   pointToString,
   pointsToString,
   rowColToId,
-  stringToPoint,
 } from "@models/hex.utils";
 import { Sector } from "@models/task/sector";
 import { Territory, TerritorySection } from "@models/territory";

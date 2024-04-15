@@ -20,6 +20,7 @@ export enum TaskColor {
   YELLOW = "#F6D083",
   BROWN = "#BC768B",
 }
+export const COLORS = Object.values(TaskColor);
 
 export enum DisplayTaskChange {
   EDIT_ON,

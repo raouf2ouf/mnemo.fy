@@ -25,16 +25,29 @@ const Territory: React.FC<Props> = ({ id }) => {
           {territory.sections.map((section, idx) => {
             if (section.userControlled) {
               return (
-                <polygon
-                  points={section.points}
-                  key={idx}
-                  className="user"
-                  fill={`url(${sector.color})`}
-                />
+                <g key={idx}>
+                  <polygon
+                    points={section.points}
+                    className="user"
+                    fill={`url(${sector.color})`}
+                  />
+                </g>
               );
             } else {
               return (
-                <polygon points={section.points} key={idx} className="empty" />
+                <g key={idx}>
+                  <polygon points={section.points} className="empty" />
+                  <text
+                    x={section.titlePosition.x}
+                    y={section.titlePosition.y}
+                    fontSize={(section.titleSize * 3) / sector.name.length}
+                    fill={sector.color + "30"}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                  >
+                    {sector.name.toUpperCase()}
+                  </text>
+                </g>
               );
             }
           })}

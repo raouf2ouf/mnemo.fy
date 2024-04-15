@@ -9,6 +9,7 @@ import { inflateTasks } from "./tasks.slice";
 import { RootState } from "./store";
 import { toast } from "react-toastify";
 import { getAllLocalGalaxies, saveGalaxyLocally } from "@api/local";
+import { buildMinimapRepresentation } from "./galaxies.slice.utils";
 
 // API
 export const saveCurrentGalaxyLocally = createAsyncThunk(
@@ -22,8 +23,10 @@ export const saveCurrentGalaxyLocally = createAsyncThunk(
       .filter((t) => t.galaxyId == currentGalaxyId && t.name.length > 0)
       .sort((a, b) => a.index - b.index);
     const galaxyData = deflateGalaxy(currentGalaxy, tasks);
+    galaxyData.date = Date.now();
     galaxyData.saveStatus = SaveStatus.NO_COPY;
     await saveGalaxyLocally(galaxyData);
+    galaxyData.minimap = buildMinimapRepresentation(galaxyData);
     return galaxyData;
   }
 );
@@ -87,6 +90,13 @@ export const addLocalGalaxies = createAsyncThunk(
     galaxyId: string | undefined;
   }> => {
     const local = await getAllLocalGalaxies();
+    for (const g of local) {
+      try {
+        g.minimap = buildMinimapRepresentation(g);
+      } catch (e) {
+        console.error(e);
+      }
+    }
     if (galaxyId) {
       const exists = local.find((g) => g.id == galaxyId);
       if (exists) {

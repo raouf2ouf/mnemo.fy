@@ -11,6 +11,8 @@ export interface TerritorySection {
 export interface Territory {
   id: string;
   sections: TerritorySection[];
+  color?: string; // used only for minimap representation
+  title?: string;
 }
 
 export interface Shape {

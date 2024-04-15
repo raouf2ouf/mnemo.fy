@@ -1,0 +1,31 @@
+svg {
+  .hex {
+    fill: rgba(var(--background-color-light-rgb), 0.3);
+    stroke-width: 10px;
+    stroke: rgba(var(--background-color-light-rgb), 1);
+    &.used {
+      fill: transparent;
+      stroke: rgba(var(--background-color-light-rgb), 0.2);
+    }
+  }
+  .system {
+    polygon {
+      fill: var(--color);
+      stroke: var(--color);
+    }
+    circle {
+      fill: var(--color);
+    }
+  }
+  .territory {
+    polygon.user {
+      stroke-width: 9;
+      stroke: var(--color-tint);
+    }
+    polygon.empty {
+      stroke-width: 4;
+      stroke: var(--color-tint);
+      fill: var(--color);
+    }
+  }
+}

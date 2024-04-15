@@ -9,9 +9,7 @@ import { refreshSharp } from "ionicons/icons";
 import { useAppDispatch } from "@store/store";
 import { refreshPositions } from "@store/hexes.slice";
 import Territories from "./Territories";
-import { TaskColor } from "@models/task/task.enums";
-
-const COLORS = Object.values(TaskColor);
+import { COLORS } from "@models/task/task.enums";
 
 const MiniMap: React.FC = () => {
   const dispatch = useAppDispatch();
