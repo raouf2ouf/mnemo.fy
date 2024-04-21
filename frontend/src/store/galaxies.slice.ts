@@ -119,6 +119,13 @@ const galaxiesAdapter = createEntityAdapter<GalaxyDataExport>({});
 export const { selectAll: selectAllGalaxies, selectById: selectGalaxyById } =
   galaxiesAdapter.getSelectors((state: any) => state.galaxies);
 
+export const selectCurrentGalaxy = createSelector(
+  [selectAllGalaxies, (state) => state.galaxies.currentGalaxyId],
+  (galaxies: GalaxyDataExport[], currentGalaxyId?: string) => {
+    return galaxies.find((g) => g.id == currentGalaxyId);
+  }
+);
+
 export const selectCurrentGalaxySaveStatus = createSelector(
   [selectAllGalaxies, (state) => state.galaxies.currentGalaxyId],
   (galaxies: GalaxyDataExport[], currentGalaxyId?: string) => {

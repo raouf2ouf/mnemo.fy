@@ -4,12 +4,84 @@
     &::part(scroll) {
       display: flex;
     }
-    & > div {
+    .menu-content-container {
+      min-height: 100%;
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       color: var(--ion-color-light-shade);
+      .section.sectors {
+        flex: 1;
+        max-height: 100%;
+        .sectors-list {
+          width: 100%;
+          flex: 1;
+          padding: 0px 16px;
+          display: flex;
+          flex-direction: column;
+          & > div {
+            flex: 1;
+            padding: 8px 4px 8px 8px;
+            max-height: 100%;
+            background: var(--background-color-dark);
+            overflow-y: scroll;
+            scrollbar-width: thin;
+            scrollbar-color: var(--background-color-light) transparent;
+
+            .sector-display {
+              background-color: var(--background-color-light);
+              margin: 8px 0px;
+              padding: 8px;
+              .sector-main-row {
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+                .type-text {
+                  margin-left: 8px;
+                  text-transform: uppercase;
+                  color: var(--color);
+                }
+                .sector-name {
+                  color: var(--ion-color-light-shade);
+                  flex: 1;
+                  margin-left: 16px;
+                }
+                .systems {
+                  display: flex;
+                  .system {
+                    border-radius: 50%;
+                    width: 10px;
+                    height: 10px;
+                    border: 2px solid var(--color);
+                    margin-right: 2px;
+                    &.checked {
+                      background-color: var(--color);
+                    }
+                  }
+                }
+              }
+              .progress {
+                display: flex;
+                padding: 2px 0px;
+                ion-progress-bar {
+                  --progress-background: var(--color);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .galaxy-name {
+      font-size: 1.5rem;
+      color: var(--ion-color-light-shade);
+      color: var(--ion-color-primary-shade);
+    }
+    .galaxy-description {
+      color: var(--ion-color-medium-tint);
+      margin-bottom: 8px;
     }
   }
   ion-footer {
@@ -25,7 +97,7 @@
         .numbers {
           color: var(--ion-color-light-shade);
           .completed {
-            color: var(--metis-color-user);
+            color: var(--color-user);
             font-weight: bold;
           }
         }

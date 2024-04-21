@@ -19,6 +19,7 @@ import { backup } from "./backup.slice";
 import { buildTerritories } from "./territories.slice.utils";
 import { Sector } from "@models/task/sector";
 import { updateTerritories } from "./territories.slice";
+import { computeTasksProgress } from "./tasks.slice.utils";
 
 // API
 export const loadHexes = createAsyncThunk(
@@ -44,12 +45,10 @@ export const refreshPositions = createAsyncThunk(
     const hexes = Object.values(state.hexes.entities).map((hex) => {
       return { ...hex };
     });
-    const tasks = Object.values(state.tasks.entities);
-    const systems = tasks
-      .filter((t) => t.type == TaskType.SYSTEM)
-      .map((t) => {
-        return { ...t };
-      }) as System[];
+    const tasks = Object.values(state.tasks.entities).map((t) => {
+      return { ...t };
+    });
+    const systems = tasks.filter((t) => t.type == TaskType.SYSTEM) as System[];
     const sectors = tasks.filter((t) => t.type == TaskType.SECTOR) as Sector[];
 
     const bkp: BackupStep = {
@@ -103,6 +102,10 @@ export const refreshPositions = createAsyncThunk(
         system.hex = hexId;
       }
     }
+    const { rollforwardProgress, rollbackProgress } =
+      computeTasksProgress(tasks);
+    _addToChangeStack(bkp.rollback.tasksChange!, rollbackProgress);
+    _addToChangeStack(bkp.rollforward.tasksChange!, rollforwardProgress);
 
     const { rollbackHexes, rollforwardHexes } = computeHexesControl(
       hexes,

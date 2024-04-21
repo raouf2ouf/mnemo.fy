@@ -1,10 +1,10 @@
 import { Task } from "@models/task/task";
-import { getAllChildren } from "./tasks.slice.utils";
+import { getAllChildren, getDirectChildren } from "./tasks.slice.utils";
 import { HEX_SIZE, Hex } from "@models/hex";
 import { getFreeNeighbors } from "@models/hex.utils";
 import { System } from "@models/task/system";
 import { TaskType } from "@models/task/task.enums";
-import { HexChange } from "@models/backup";
+import { HexChange, TaskChange } from "@models/backup";
 
 export function proposeSystemPosition(
   systems: Task[],
@@ -69,23 +69,11 @@ export function computeHexesControl(
   const systems = allTasks.filter((t) => t.type == TaskType.SYSTEM) as System[];
   let remaining: Task[] = allTasks;
   for (const system of systems) {
-    const { children, rest } = getAllChildren(remaining, system.id);
-    let strength = 0;
-    let control = 0;
-    for (const child of children) {
-      if (child.type == TaskType.PLANET) {
-        strength += 1;
-      }
-      if (child.checked) {
-        control += 1;
-      }
-    }
-    if (system.checked) {
-      control += 1;
-    }
+    const { children, rest } = getDirectChildren(remaining, system.id);
+    let strength = children.length;
     systemDataMap.set(system.id, {
       strength: 1 + strength / 8,
-      control: control / (children.length + 1),
+      control: system.progress || 0,
     });
     remaining = rest;
   }

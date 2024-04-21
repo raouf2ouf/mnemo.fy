@@ -8,6 +8,7 @@ import {
   createSlice,
 } from "@reduxjs/toolkit";
 import {
+  computeTasksProgress,
   getAllChildren,
   getFocusIdDown,
   getFocusIdUp,
@@ -34,6 +35,8 @@ import { buildSpaceFlatHexes } from "@models/hex.utils";
 import { HEX_SIZE, NBR_COLS, NBR_ROWS } from "@models/hex";
 import { buildTerritories } from "./territories.slice.utils";
 import { updateTerritories } from "./territories.slice";
+import { Planet } from "@models/task/planet";
+import { System } from "@models/task/system";
 
 // API
 export const addTask = createAsyncThunk(
@@ -154,6 +157,8 @@ export const inflateTasks = createAsyncThunk(
       }
     }
 
+    computeTasksProgress(tasks);
+
     computeHexesControl(hexes, tasks);
     const territories = buildTerritories(
       tasks.filter((t) => t.type == TaskType.SECTOR) as Sector[],
@@ -192,6 +197,11 @@ export const toggleChecked = createAsyncThunk(
       return { ...hex };
     });
     const { nbrRows, nbrCols } = state.hexes;
+    const { rollbackProgress, rollforwardProgress } =
+      computeTasksProgress(tasks);
+    _addToChangeStack(bkp.rollback.tasksChange!, rollbackProgress);
+    _addToChangeStack(bkp.rollforward.tasksChange!, rollforwardProgress);
+
     const { rollbackHexes, rollforwardHexes } = computeHexesControl(
       hexes,
       tasks
@@ -427,6 +437,27 @@ const tasksAdapter = createEntityAdapter<Task>({
 // Selectors
 export const { selectAll: selectAllTasks, selectById: selectTaskById } =
   tasksAdapter.getSelectors((state: any) => state.tasks);
+
+export const selectPlanets = createSelector(
+  [selectAllTasks, (state, id: string) => id],
+  (tasks: Task[], id: string) => {
+    return tasks.filter((t) => t.parent == id) as Planet[];
+  }
+);
+
+export const selectSectors = createSelector(
+  [selectAllTasks],
+  (tasks: Task[]) => {
+    return tasks.filter((t) => t.type == TaskType.SECTOR) as Sector[];
+  }
+);
+
+export const selectSystemsOfSector = createSelector(
+  [selectAllTasks, (state, id: string) => id],
+  (tasks: Task[], id: string) => {
+    return tasks.filter((t) => t.parent == id) as System[];
+  }
+);
 
 export const selectAllCurrentGalaxyTasks = createSelector(
   [selectAllTasks, (state) => state.galaxies.currentGalaxyId],

@@ -3,6 +3,7 @@ import "./MapPage.scss";
 import { IonContent, IonPage } from "@ionic/react";
 import { useAppSelector } from "@store/store";
 import { Redirect } from "react-router";
+import BigMap from "@components/BigMap/BigMap";
 
 const MapPage: React.FC = () => {
   const currentGalaxyId = useAppSelector(
@@ -12,7 +13,7 @@ const MapPage: React.FC = () => {
     <IonPage>
       <IonContent className="page-content">
         <div className="main-container map-page">
-          {currentGalaxyId ? <div></div> : <Redirect to="/projects" />}
+          <BigMap />
         </div>
       </IonContent>
     </IonPage>

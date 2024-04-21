@@ -1,7 +1,7 @@
 import { BackupStep, TaskChange } from "@models/backup";
 import { inflateMoon } from "@models/task/moon";
 import { inflatePlanet } from "@models/task/planet";
-import { SectorDataExport, inflateSector } from "@models/task/sector";
+import { Sector, SectorDataExport, inflateSector } from "@models/task/sector";
 import { inflateSystem } from "@models/task/system";
 import { Task } from "@models/task/task";
 import { TaskColor, TaskType } from "@models/task/task.enums";
@@ -682,4 +682,46 @@ export function getFocusIdDown(tasks: Task[], currentFocusId: string): string {
     id = "add-task";
   }
   return id;
+}
+
+function computeTaskProgress(
+  task: Task,
+  tasks: Task[],
+  rollbackProgress: TaskChange[],
+  rollforwardProgress: TaskChange[]
+) {
+  rollbackProgress.push({
+    id: task.id,
+    changes: { progress: task.progress },
+  });
+  let progress = task.checked ? 1 : 0;
+  const { children } = getDirectChildren(tasks, task.id);
+  for (const child of children) {
+    computeTaskProgress(child, tasks, rollbackProgress, rollforwardProgress);
+    progress += child.progress || 0;
+  }
+  task.progress = progress / (children.length + 1);
+  rollforwardProgress.push({
+    id: task.id,
+    changes: { progress: task.progress },
+  });
+}
+
+export function computeTasksProgress(tasks: Task[]): {
+  rollbackProgress: TaskChange[];
+  rollforwardProgress: TaskChange[];
+  galaxyProgress: number;
+} {
+  const rollforwardProgress: TaskChange[] = [];
+  const rollbackProgress: TaskChange[] = [];
+  let galaxyProgress: number = 0;
+
+  const sectors = tasks.filter((t) => t.type == TaskType.SECTOR) as Sector[];
+  for (const sector of sectors) {
+    computeTaskProgress(sector, tasks, rollbackProgress, rollforwardProgress);
+    galaxyProgress += sector.progress || 0;
+  }
+  galaxyProgress = (galaxyProgress + 1) / (sectors.length + 1);
+
+  return { rollbackProgress, rollforwardProgress, galaxyProgress };
 }

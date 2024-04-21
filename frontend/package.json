@@ -31,6 +31,7 @@
     "react-router": "^5.3.4",
     "react-router-dom": "^5.3.4",
     "react-toastify": "^10.0.5",
+    "react-zoom-pan-pinch": "^3.4.4",
     "tinyqueue": "^2.0.3",
     "uuid": "^9.0.1"
   },

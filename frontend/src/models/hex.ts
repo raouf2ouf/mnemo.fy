@@ -1,5 +1,7 @@
 export const HEX_SIZE = 130;
 export const SPACE_SIZE = 975;
+export const WIDTH = SPACE_SIZE;
+export const HEIGHT = SPACE_SIZE + 300;
 export const NBR_ROWS = 7;
 export const NBR_COLS = 9;
 

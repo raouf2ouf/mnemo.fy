@@ -19,11 +19,6 @@ const MiniMap: React.FC = () => {
   }
   return (
     <div className="mini-map-container">
-      <div className="mini-map-buttons">
-        <IonButton fill="clear" onClick={handleMapRefresh}>
-          <IonIcon slot="icon-only" icon={refreshSharp} />
-        </IonButton>
-      </div>
       <div className="mini-map">
         <svg
           width="200"
@@ -56,6 +51,12 @@ const MiniMap: React.FC = () => {
             <Systems />
           </g>
         </svg>
+      </div>
+
+      <div className="mini-map-buttons">
+        <IonButton fill="clear" expand="block" onClick={handleMapRefresh}>
+          <IonIcon slot="icon-only" icon={refreshSharp} />
+        </IonButton>
       </div>
     </div>
   );

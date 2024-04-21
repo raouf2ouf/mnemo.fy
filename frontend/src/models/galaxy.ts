@@ -44,6 +44,7 @@ interface BasicGalaxyData {
   lastServerDate?: number;
   lastModificationDate?: number;
   saveStatus?: SaveStatus;
+  progress?: number;
   minimap?: { territories: Territory[]; systems: System[]; hexes: Hex[] };
 }
 

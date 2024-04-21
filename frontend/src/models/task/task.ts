@@ -16,6 +16,7 @@ export interface BasicTaskData {
   name: string;
   description: string;
   type: TaskType;
+  progress?: number;
 
   checked: boolean;
   closed: boolean;

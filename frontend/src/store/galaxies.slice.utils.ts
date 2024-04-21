@@ -10,6 +10,7 @@ import { buildTerritories } from "./territories.slice.utils";
 import { Sector } from "@models/task/sector";
 import { System } from "@models/task/system";
 import { Territory } from "@models/territory";
+import { computeTasksProgress } from "./tasks.slice.utils";
 
 export function buildMinimapRepresentation(galaxy: GalaxyDataExport): {
   hexes: Hex[];
@@ -49,6 +50,7 @@ export function buildMinimapRepresentation(galaxy: GalaxyDataExport): {
       hexes[system.hex].sectorId = system.parent;
     }
   }
+  computeTasksProgress(tasks);
   computeHexesControl(hexes, tasks);
   const territories = buildTerritories(sectors, hexes, nbrRows, nbrCols);
 
@@ -58,5 +60,6 @@ export function buildMinimapRepresentation(galaxy: GalaxyDataExport): {
     t.title = sec.name;
   }
 
+  console.log(territories);
   return { hexes, territories, systems };
 }

@@ -1,0 +1,113 @@
+svg.bigmap {
+  .big-map-background {
+    fill: var(--background-color-light);
+  }
+  .big-map-hole {
+    fill: var(--background-color-dark);
+  }
+  .big-hex {
+    polygon {
+      fill: rgba(var(--background-color-light-rgb), 0.3);
+      stroke-width: 5px;
+      stroke: rgba(var(--background-color-light-rgb), 1);
+      &.used {
+        fill: transparent;
+        stroke: rgba(var(--background-color-light-rgb), 0.2);
+      }
+    }
+    text {
+      fill: rgba(var(--ion-color-primary-rgb), 0.3);
+    }
+  }
+  .big-system {
+    circle {
+      fill: var(--color);
+    }
+    circle.planet {
+      opacity: 0.8;
+      fill: transparent;
+      stroke: var(--ion-color-light);
+      stroke-width: 2;
+      &.checked {
+        fill: var(--ion-color-light);
+      }
+    }
+    text {
+      fill: var(--ion-color-light-shade);
+    }
+  }
+  .big-territory {
+    polygon.user {
+      stroke-width: 5;
+      stroke: var(--color-pure);
+      fill: var(--color-shade);
+    }
+    polygon.empty {
+      stroke-width: 10;
+      stroke: var(--color-pure);
+      //   stroke: rgb(147, 147, 147);
+      stroke: var(--background-color-dark);
+      fill: var(--color);
+    }
+  }
+  .big-controls-rect {
+    stroke-width: 30;
+    fill: transparent;
+    // stroke: #9c9c9c;
+    // stroke: #bdbdbd;
+    // stroke: var(--ion-color-primary);
+    stroke: var(--background-color-light);
+  }
+  .big-controls-down {
+    stroke-width: 30;
+    stroke: var(--background-color-light);
+    fill: var(--background-color-light);
+  }
+  .big-controls-progress-outside {
+    stroke: var(--background-color-dark);
+    fill: var(--background-color-dark);
+    stroke-width: 30;
+  }
+  .big-controls-progress-inside {
+    // stroke: rgba(var(--ion-color-primary-rgb), 0.5);
+    // fill: rgba(var(--ion-color-primary-rgb), 0.5);
+    stroke: var(--background-color-light);
+    fill: var(--background-color-light);
+    stroke-width: 10;
+  }
+  .big-controls-progress {
+    stroke: var(--color-user);
+    fill: var(--color-user);
+    stroke: rgba(var(--ion-color-primary-rgb), 0.8);
+    fill: transparent;
+    stroke-width: 10;
+  }
+  .big-title {
+    fill: #fff;
+    font-size: 50px;
+  }
+  .group-title {
+    transform: translate(50%, 70px);
+    text.title {
+      fill: #fff;
+      font-size: 60px;
+    }
+    text.description {
+      fill: var(--ion-color-light-shade);
+      font-size: 30px;
+    }
+    text.date {
+      fill: var(--ion-color-medium-tint);
+      font-size: 20px;
+    }
+  }
+}
+
+div.big-map-zoom {
+  width: 100% !important;
+  height: 100% !important;
+  & > div {
+    width: 100%;
+    height: 100%;
+  }
+}
