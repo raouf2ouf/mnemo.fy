@@ -10,9 +10,9 @@ This is a project submission for the encode Web3 Scaling Hackathon.
 
 ## Links
 
-- [Demo Video]()
+- [Demo Video](https://www.youtube.com/watch?v=Iwgm_2z1X4w)
 - [Pitch Deck](https://docs.google.com/presentation/d/1xWOztCVvaGYTs0r7JGUa9iVoH9-RUQpqX-j9Oyo_X2E/edit?usp=sharing)
-- [Etherlink Mnemofy Factory]()
+- [Etherlink Mnemofy Factory](https://testnet-explorer.etherlink.com/tx/0x27ec436e3ea0ca899ecd17942fbf72243446f4806d624fc3038fda8bd4e9eaac)
 
 ## Table of Content
 
@@ -40,6 +40,24 @@ Mnemofy is a simple todo app that displays the progress as a space map with terr
 
 The resulting NFT functions the same way as any ERC721 NFT, the added value is that now you can have snapshots inside these NFTs!
 
+Your todos should be structured as follows:
+
+- **Sectors** are the general domain (they are represented as a territory).
+- **Systems** are children of sectors (they are represented as a star inside a territory).
+- **Planets** are children of systems (they are represented as dots on top of each system).
+- **Moons** are children of planets (they are not represented yet in the space map)
+
 ## Known Issues
 
+Unfortunatly, this project is still in its early version and multiple bugs have been identified:
+
+- Buggy navigation using keyboard.
+- Adding a sub task can sometimes fail randomly.
+- SVG generation from the NFT is not complete.
+- Loading and detection of wallet owned NFT sometimes fails to retrieve all NFTs of a connected wallet.
+- ...
+
 ## Roadmap
+
+- 2024Q2: Have a working version with basic map editing functionnalities.
+- 2024Q3: Add Space Map themes & public launch
