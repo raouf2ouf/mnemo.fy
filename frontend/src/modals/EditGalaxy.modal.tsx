@@ -56,7 +56,7 @@ const EditGalaxyModal: React.FC<Props> = ({ isOpen, data, setIsOpen }) => {
         description,
         discoverable,
         theme,
-        lastModificationData: Date.now(),
+        lastModificationDate: Date.now(),
         saveStatus: SaveStatus.NEED_TO_SAVE,
       })
     );

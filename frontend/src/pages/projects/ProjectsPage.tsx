@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import "./ProjectsPage.scss";
 import {
   IonAccordion,
@@ -14,19 +14,47 @@ import {
 import { addSharp, documentSharp, walletSharp } from "ionicons/icons";
 import { GalaxyDataExport, GalaxyTheme, createNewGalaxy } from "@models/galaxy";
 import EditGalaxyModal from "@modals/EditGalaxy.modal";
-import { useAppSelector } from "@store/store";
-import { selectAllGalaxiesIds } from "@store/galaxies.slice";
+import { useAppDispatch, useAppSelector } from "@store/store";
+import {
+  addGalaxyAndLoadChildren,
+  selectAllGalaxiesIds,
+} from "@store/galaxies.slice";
 import GalaxyCardDisplay from "@components/GalaxyCardDisplay/GalaxyCardDisplay";
+import { useAccount } from "wagmi";
 
 const ProjectsPage: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { isConnected } = useAccount();
   const galaxies = useAppSelector(selectAllGalaxiesIds);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalData, setModalData] = useState<GalaxyDataExport | undefined>();
+  const fileInputRef = useRef(null);
 
   function createGalaxy() {
     const galaxy = createNewGalaxy("", "", GalaxyTheme.BTL, false);
     setModalData(galaxy);
     setShowModal(true);
+  }
+
+  function handleImportClick() {
+    //@ts-ignore
+    fileInputRef.current.click();
+  }
+
+  function importGalaxy(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result;
+      try {
+        const json = JSON.parse(text as string);
+        dispatch(addGalaxyAndLoadChildren(json));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    reader.readAsText(file);
   }
 
   return (
@@ -55,10 +83,17 @@ const ProjectsPage: React.FC = () => {
                     </IonCardContent>
                   </IonCard>
 
-                  <IonCard type="button" className="card-button import-galaxy">
+                  <IonCard
+                    type="button"
+                    className="card-button import-galaxy"
+                    onClick={handleImportClick}
+                  >
                     <input
                       type="file"
-                      // (change)="handleImportGalaxy($event)"
+                      accept=".json"
+                      style={{ display: "none" }}
+                      onChange={importGalaxy}
+                      ref={fileInputRef}
                     />
                     <IonCardContent>
                       <IonIcon icon={documentSharp} />
@@ -72,6 +107,10 @@ const ProjectsPage: React.FC = () => {
                   <IonLabel>NFTs</IonLabel>
                 </IonItem>
                 <div slot="content">
+                  {galaxies &&
+                    galaxies.map((gId) => (
+                      <GalaxyCardDisplay key={gId} id={gId} />
+                    ))}
                   <IonCard type="button" className="card-button connect-wallet">
                     <IonCardContent>
                       <IonIcon icon={walletSharp} />

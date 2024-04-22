@@ -39,13 +39,25 @@ contract MnemofyNFTFactory is Ownable, ERC721 {
     ////////////////
     // External
     ////////////////
-    function mint(address to, bytes memory data) public payable {
+    function mint(
+        address to,
+        string[] memory territories,
+        string[] memory systems,
+        string memory projectName
+    ) public payable {
         if (msg.value < _mintPrice) {
             revert sendMore();
         }
         uint256 tokenId = _nftAddresses.length;
         // minting
-        MnemofyNFT nft = new MnemofyNFT(this, tokenId, to);
+        MnemofyNFT nft = new MnemofyNFT(
+            address(this),
+            tokenId,
+            to,
+            projectName,
+            territories,
+            systems
+        );
         _nftAddresses.push(address(nft));
         _nftAddressToTokenId[address(nft)] = tokenId;
         _safeMint(to, tokenId);
